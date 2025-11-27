@@ -201,10 +201,14 @@ class StaffJobListView(ListView):
             ],
         }
 
-        group_counts = {
-            label: sum(1 for job in ctx["jobs"] if job.status in statuses)
+        grouped_jobs = [
+            {
+                "label": label,
+                "statuses": statuses,
+                "jobs": [job for job in ctx["jobs"] if job.status in statuses],
+            }
             for label, statuses in status_groups.items()
-        }
+        ]
 
-        ctx.update({"status_groups": status_groups, "group_counts": group_counts})
+        ctx.update({"grouped_jobs": grouped_jobs})
         return ctx
