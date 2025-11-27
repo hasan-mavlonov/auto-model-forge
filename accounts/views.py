@@ -43,7 +43,20 @@ class RegisterView(FormView):
 
     def form_valid(self, form):
         user = form.save()
-        send_activation_email(user, self.request)
+        try:
+            send_activation_email(user, self.request)
+        except Exception as exc:  # pragma: no cover - depends on email backend
+            user.delete()
+            form.add_error(
+                None,
+                "We could not send the activation email. Please check your email address or contact support.",
+            )
+            return self.form_invalid(form)
+
+        messages.success(
+            self.request,
+            "Activation link has been sent. Please check your inbox to finish signup.",
+        )
         return super().form_valid(form)
 
 

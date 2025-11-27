@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}My training jobs · Auto Model Forge{% endblock %}
+
+{% block content %}
+  <section class="section" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <div>
+        <h1 style="margin: 0;">My training jobs</h1>
+        <p class="subtext" style="margin: 0.35rem 0 0;">Track your uploads, payment status, and downloads in one place.</p>
+      </div>
+      <div style="display: flex; gap: 0.65rem;">
+        <a href="{% url 'training:job_create' %}" class="btn-primary">New training job</a>
+      </div>
+    </div>
+  </section>
+
+  {% if jobs %}
+    <div class="card" style="padding: 1rem;">
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 720px;">
+          <thead>
+            <tr style="text-align: left; color: var(--muted);">
+              <th style="padding: 0.75rem 0.6rem;">Project</th>
+              <th style="padding: 0.75rem 0.6rem;">Created</th>
+              <th style="padding: 0.75rem 0.6rem;">Status</th>
+              <th style="padding: 0.75rem 0.6rem;">Total</th>
+              <th style="padding: 0.75rem 0.6rem; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for job in jobs %}
+              <tr style="border-top: 1px solid var(--border);">
+                <td style="padding: 0.75rem 0.6rem;">
+                  <div style="font-weight: 700;">{{ job.project_name }}</div>
+                  <div class="subtext">{{ job.model_type.name }} · {{ job.base_model.name }}</div>
+                </td>
+                <td style="padding: 0.75rem 0.6rem; color: var(--muted);">{{ job.created_at|date:"Y-m-d H:i" }}</td>
+                <td style="padding: 0.75rem 0.6rem;">
+                  {% if job.status == "completed" %}
+                    <span class="status-badge status-completed">Completed</span>
+                  {% elif job.status == "paid" or job.status == "processing" %}
+                    <span class="status-badge status-paid">Paid / Processing</span>
+                  {% elif job.status == "payment_submitted" %}
+                    <span class="status-badge status-submitted">Awaiting confirmation</span>
+                  {% elif job.status == "awaiting_payment" or job.status == "created" %}
+                    <span class="status-badge status-awaiting">Awaiting payment</span>
+                  {% else %}
+                    <span class="status-badge status-other">{{ job.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.75rem 0.6rem; font-weight: 700;">${{ job.total_price|floatformat:2 }}</td>
+                <td style="padding: 0.75rem 0.6rem; text-align: right;">
+                  <a href="{% url 'training:job_detail' job.public_id %}" class="btn-secondary">View details</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card" style="padding: 1.25rem;">
+      <h3 style="margin: 0 0 0.35rem;">No jobs yet</h3>
+      <p class="subtext" style="margin: 0 0 0.75rem;">Create your first training job to see it listed here.</p>
+      <a href="{% url 'training:job_create' %}" class="btn-primary">Start a job</a>
+    </div>
+  {% endif %}
+{% endblock %}
