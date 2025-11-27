@@ -1,58 +1,74 @@
-{# templates/training/job_create.html #}
+{# templates/training/job_create.html - styled form card aligned with landing #}
 {% extends "base.html" %}
 
+{% block title %}Create training job · Auto Model Forge{% endblock %}
+
 {% block content %}
-  <h1>Create a new training job</h1>
-
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-
-    {% if form.non_field_errors %}
-      <div style="color: red; margin-bottom: 1rem;">
-        {% for error in form.non_field_errors %}
-          <div>{{ error }}</div>
-        {% endfor %}
+  <section class="section" style="max-width: 820px; margin: 0 auto;">
+    <div class="pill" style="margin-bottom: 0.85rem;">Step 1 — Create your training job</div>
+    <div class="card" style="padding: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <div>
+          <h1 style="margin: 0 0 0.35rem;">Training setup</h1>
+          <p class="subtext" style="max-width: 520px;">Upload your dataset, pick the model type, and choose a base model. Pricing is calculated automatically on the next step.</p>
+        </div>
+        <div class="badge">Fast turnaround</div>
       </div>
-    {% endif %}
 
-    <div>
-      <label for="{{ form.project_name.id_for_label }}">Project name</label>
-      {{ form.project_name }}
-      {% if form.project_name.help_text %}
-        <small>{{ form.project_name.help_text }}</small>
-      {% endif %}
-      {% for error in form.project_name.errors %}
-        <div style="color: red;">{{ error }}</div>
-      {% endfor %}
+      <form method="post" enctype="multipart/form-data" class="stack">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="message error" style="margin: 0;">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="stack">
+          <label for="{{ form.project_name.id_for_label }}" class="label">Project name</label>
+          {{ form.project_name }}
+          {% if form.project_name.help_text %}
+            <div class="subtext">{{ form.project_name.help_text }}</div>
+          {% endif %}
+          {% for error in form.project_name.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="stack">
+          <label for="{{ form.model_type.id_for_label }}" class="label">Model type</label>
+          {{ form.model_type }}
+          {% for error in form.model_type.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="stack">
+          <label for="{{ form.base_model.id_for_label }}" class="label">Base model</label>
+          {{ form.base_model }}
+          {% for error in form.base_model.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="stack">
+          <label for="{{ form.images.id_for_label }}" class="label">Training images</label>
+          {{ form.images }}
+          {% if form.images.help_text %}
+            <div class="subtext">{{ form.images.help_text }}</div>
+          {% endif %}
+          {% for error in form.images.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+          <div class="subtext">Uploads are encrypted and processed for training only.</div>
+          <button type="submit" class="btn-primary">Continue</button>
+        </div>
+      </form>
     </div>
-
-    <div>
-      <label for="{{ form.model_type.id_for_label }}">Model type</label>
-      {{ form.model_type }}
-      {% for error in form.model_type.errors %}
-        <div style="color: red;">{{ error }}</div>
-      {% endfor %}
-    </div>
-
-    <div>
-      <label for="{{ form.base_model.id_for_label }}">Base model</label>
-      {{ form.base_model }}
-      {% for error in form.base_model.errors %}
-        <div style="color: red;">{{ error }}</div>
-      {% endfor %}
-    </div>
-
-    <div>
-      <label for="{{ form.images.id_for_label }}">Training images</label>
-      {{ form.images }}
-      {% if form.images.help_text %}
-        <small>{{ form.images.help_text }}</small>
-      {% endif %}
-      {% for error in form.images.errors %}
-        <div style="color: red;">{{ error }}</div>
-      {% endfor %}
-    </div>
-
-    <button type="submit">Continue</button>
-  </form>
+  </section>
 {% endblock %}

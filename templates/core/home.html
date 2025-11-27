@@ -1,0 +1,141 @@
+{# Updated to use Pixa AI-inspired layout: hero, how-it-works, model types, pricing, FAQ #}
+{% extends "base.html" %}
+
+{% block title %}Auto Model Forge — Train custom models fast{% endblock %}
+
+{% block content %}
+<section class="section" style="margin-top: 1rem;">
+  <div class="card" style="padding: 2.4rem; background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(56,189,248,0.12)); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 40px 120px rgba(0,0,0,0.35);">
+    <div class="badge">Auto Model Forge</div>
+    <h1 style="font-size: clamp(2rem, 3vw, 3rem); margin: 0.9rem 0 0.4rem; line-height: 1.15;">
+      Upload images, get a trained model in ~24 hours.
+    </h1>
+    <p class="section-lead" style="max-width: 720px; font-size: 1.05rem;">
+      Train custom SDXL / LoRA models with just 10–60 images. Pay via WeChat or Alipay, and download your fine-tuned model file once it's ready.
+    </p>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+      <a href="{% url 'training:job_create' %}" class="btn-primary">Start training</a>
+      <a href="#pricing" class="btn-secondary">See pricing</a>
+      <div class="pill">24h turnaround · Human-verified</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+    <div>
+      <h2>How it works</h2>
+      <p class="section-lead">A simple four-step flow modeled after the Pixa AI onboarding bento.</p>
+    </div>
+    <div class="pill">Secure payments via WeChat & Alipay</div>
+  </div>
+  <div class="grid-3" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+    <div class="card" style="position: relative; overflow: hidden;">
+      <div class="pill" style="position: absolute; top: 1rem; right: 1rem;">Step 1</div>
+      <h3 style="margin: 0 0 0.4rem;">Upload your dataset</h3>
+      <p class="subtext">Add 10–60 curated images for your character, object, or face.</p>
+    </div>
+    <div class="card" style="position: relative; overflow: hidden;">
+      <div class="pill" style="position: absolute; top: 1rem; right: 1rem;">Step 2</div>
+      <h3 style="margin: 0 0 0.4rem;">We calculate the price</h3>
+      <p class="subtext">Transparent pricing based on base model type plus per-image cost.</p>
+    </div>
+    <div class="card" style="position: relative; overflow: hidden;">
+      <div class="pill" style="position: absolute; top: 1rem; right: 1rem;">Step 3</div>
+      <h3 style="margin: 0 0 0.4rem;">Pay via WeChat / Alipay</h3>
+      <p class="subtext">Use the QR codes we show at checkout with reference <code>AMF-XXXX</code>.</p>
+    </div>
+    <div class="card" style="position: relative; overflow: hidden;">
+      <div class="pill" style="position: absolute; top: 1rem; right: 1rem;">Step 4</div>
+      <h3 style="margin: 0 0 0.4rem;">We train & deliver</h3>
+      <p class="subtext">Human verified; download your LoRA/model artifact within ~24 hours.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div>
+    <h2>Model types</h2>
+    <p class="section-lead">Choose the LoRA flavor that fits your project. We fine-tune on SDXL-ready pipelines.</p>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="pill">Character LoRA</div>
+      <h3 style="margin: 0.7rem 0 0.3rem;">Build consistent IP</h3>
+      <p class="subtext">Bring a mascot or original character to life with consistent poses, outfits, and moods for marketing or comics.</p>
+    </div>
+    <div class="card">
+      <div class="pill">Object LoRA</div>
+      <h3 style="margin: 0.7rem 0 0.3rem;">Product-perfect renders</h3>
+      <p class="subtext">Feed studio shots of hardware, consumer goods, or packaging to generate on-brand visuals in new contexts.</p>
+    </div>
+    <div class="card">
+      <div class="pill">Face / Portrait LoRA</div>
+      <h3 style="margin: 0.7rem 0 0.3rem;">Portrait-quality clones</h3>
+      <p class="subtext">Create cinematic portraits, avatars, and campaign-ready shots from a handful of reference photos.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pricing">
+  <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+    <div>
+      <h2>Pricing</h2>
+      <p class="section-lead">Base price + per-image. You see the total before paying.</p>
+    </div>
+    <a href="{% url 'training:job_create' %}" class="btn-secondary">Start a job</a>
+  </div>
+  <div class="grid-3">
+    <div class="card" style="border: 1px solid rgba(124, 58, 237, 0.4);">
+      <div class="pill">Character LoRA</div>
+      <h3 style="margin: 0.6rem 0 0.4rem;">Story or marketing ready</h3>
+      <p class="subtext">Ideal for mascots and narrative IP.</p>
+      <div style="margin-top: 0.9rem; font-weight: 700; font-size: 1.3rem;">Base + per image</div>
+      <p class="subtext">Upload 10–60 images · USD pricing auto-calculated.</p>
+    </div>
+    <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.35);">
+      <div class="pill">Object LoRA</div>
+      <h3 style="margin: 0.6rem 0 0.4rem;">E-commerce visuals</h3>
+      <p class="subtext">Great for physical products and packaging.</p>
+      <div style="margin-top: 0.9rem; font-weight: 700; font-size: 1.3rem;">Base + per image</div>
+      <p class="subtext">Transparent USD & CNY equivalents shown at checkout.</p>
+    </div>
+    <div class="card" style="border: 1px solid rgba(52, 211, 153, 0.35);">
+      <div class="pill">Face / Portrait LoRA</div>
+      <h3 style="margin: 0.6rem 0 0.4rem;">Creator & UGC ready</h3>
+      <p class="subtext">Polished portraits for campaigns or avatars.</p>
+      <div style="margin-top: 0.9rem; font-weight: 700; font-size: 1.3rem;">Base + per image</div>
+      <p class="subtext">We guide you on diversity and lighting for best results.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div>
+    <h2>FAQ</h2>
+    <p class="section-lead">Quick answers to the common questions we get.</p>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <h4 style="margin: 0 0 0.35rem;">How many images do I need?</h4>
+      <p class="subtext">We work best with 10–60 images. Use varied angles, lighting, and backgrounds for the most robust LoRA.</p>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 0.35rem;">How long does training take?</h4>
+      <p class="subtext">Most jobs finish within ~24 hours after payment confirmation. We update your status on the job page.</p>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 0.35rem;">How do I pay?</h4>
+      <p class="subtext">Scan the WeChat or Alipay QR we provide, and include your reference <code>AMF-XXXX</code> so we can verify quickly.</p>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 0.35rem;">Can I get a refund if the model fails?</h4>
+      <p class="subtext">If we can't deliver a working model, we refund you. We're hands-on and monitor every job.</p>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 0.35rem;">What formats do you deliver?</h4>
+      <p class="subtext">You receive a LoRA or full model file download link directly in your job detail page once completed.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
