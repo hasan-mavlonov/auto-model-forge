@@ -1,0 +1,50 @@
+{# templates/training/job_create.html #}
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Create a new training job</h1>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div>
+      <label for="{{ form.project_name.id_for_label }}">Project name</label>
+      {{ form.project_name }}
+      {% if form.project_name.help_text %}
+        <small>{{ form.project_name.help_text }}</small>
+      {% endif %}
+      {% for error in form.project_name.errors %}
+        <div style="color: red;">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div>
+      <label for="{{ form.model_type.id_for_label }}">Model type</label>
+      {{ form.model_type }}
+      {% for error in form.model_type.errors %}
+        <div style="color: red;">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div>
+      <label for="{{ form.base_model.id_for_label }}">Base model</label>
+      {{ form.base_model }}
+      {% for error in form.base_model.errors %}
+        <div style="color: red;">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div>
+      <label for="{{ form.images.id_for_label }}">Training images</label>
+      {{ form.images }}
+      {% if form.images.help_text %}
+        <small>{{ form.images.help_text }}</small>
+      {% endif %}
+      {% for error in form.images.errors %}
+        <div style="color: red;">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <button type="submit">Continue</button>
+  </form>
+{% endblock %}

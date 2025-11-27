@@ -1,0 +1,28 @@
+{# templates/training/job_detail.html #}
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Training job: {{ job.project_name }}</h1>
+
+  <p><strong>ID:</strong> {{ job.public_id }}</p>
+  <p><strong>Status:</strong> {{ job.get_status_display }}</p>
+  <p><strong>Model type:</strong> {{ job.model_type.name }}</p>
+  <p><strong>Base model:</strong> {{ job.base_model.name }}</p>
+  <p><strong>Images:</strong> {{ job.num_images }}</p>
+  <p><strong>Total price:</strong> ${{ job.total_price }}</p>
+
+  {% if job.status == "awaiting_payment" %}
+    <p>Next step: pay for this job.</p>
+    {# Здесь позже появится кнопка "Pay with Stripe" #}
+    <button disabled>Pay (Stripe integration coming)</button>
+  {% endif %}
+
+  {% if job.status == "completed" and job.artifact %}
+    <p>Your model is ready:</p>
+    {% if job.artifact.download_url %}
+      <a href="{{ job.artifact.download_url }}" target="_blank">Download model</a>
+    {% elif job.artifact.file %}
+      <a href="{{ job.artifact.file.url }}" target="_blank">Download model</a>
+    {% endif %}
+  {% endif %}
+{% endblock %}
