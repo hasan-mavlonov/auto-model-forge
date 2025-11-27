@@ -1,41 +1,61 @@
 {% extends "base.html" %}
 
+{% block title %}Create your account · Auto Model Forge{% endblock %}
+
 {% block content %}
-  <h1>Sign up</h1>
+  <section class="section" style="max-width: 720px; margin: 0 auto;">
+    <div class="card" style="padding: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div>
+          <h1 style="margin: 0;">Create your account</h1>
+          <p class="subtext" style="margin: 0.35rem 0 0;">We’ll email you an activation link to verify your email.</p>
+        </div>
+      </div>
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+      <form method="post" class="stack" style="margin-top: 1rem;">
+        {% csrf_token %}
 
-    <div>
-      <label for="{{ form.username.id_for_label }}">Email</label>
-      {{ form.username }}
-      {% if form.username.help_text %}
-        <small>{{ form.username.help_text }}</small>
-      {% endif %}
-      {% for error in form.username.errors %}
-        <div style="color:red">{{ error }}</div>
-      {% endfor %}
+        {% if form.non_field_errors %}
+          <div class="message error" style="margin: 0;">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="stack">
+          <label for="{{ form.username.id_for_label }}" class="label">Email</label>
+          {{ form.username }}
+          {% if form.username.help_text %}
+            <div class="subtext">{{ form.username.help_text }}</div>
+          {% endif %}
+          {% for error in form.username.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="stack">
+          <label for="{{ form.password1.id_for_label }}" class="label">Password</label>
+          {{ form.password1 }}
+          {% for error in form.password1.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="stack">
+          <label for="{{ form.password2.id_for_label }}" class="label">Confirm password</label>
+          {{ form.password2 }}
+          {% for error in form.password2.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <p class="subtext" style="margin: 0;">We send the activation link immediately. Check your spam folder if you don’t see it.</p>
+          <button type="submit" class="btn-primary">Create account</button>
+        </div>
+      </form>
+      <p class="subtext" style="margin-top: 1rem;">Already have an account? <a href="{% url 'accounts:login' %}">Log in</a></p>
     </div>
-
-    <div>
-      <label for="{{ form.password1.id_for_label }}">Password</label>
-      {{ form.password1 }}
-      {% for error in form.password1.errors %}
-        <div style="color:red">{{ error }}</div>
-      {% endfor %}
-    </div>
-
-    <div>
-      <label for="{{ form.password2.id_for_label }}">Confirm password</label>
-      {{ form.password2 }}
-      {% for error in form.password2.errors %}
-        <div style="color:red">{{ error }}</div>
-      {% endfor %}
-    </div>
-
-    <button type="submit">Create account</button>
-  </form>
-
-  <p>Already have an account? <a href="{% url 'accounts:login' %}">Log in</a></p>
+  </section>
 {% endblock %}

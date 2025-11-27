@@ -1,41 +1,48 @@
 {% extends "base.html" %}
 
+{% block title %}Log in · Auto Model Forge{% endblock %}
+
 {% block content %}
-  <h1>Sign up</h1>
+  <section class="section" style="max-width: 540px; margin: 0 auto;">
+    <div class="card" style="padding: 1.75rem;">
+      <h1 style="margin: 0 0 0.5rem;">Welcome back</h1>
+      <p class="subtext" style="margin: 0 0 1rem;">Log in with your email and password to access your training jobs.</p>
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+      <form method="post" class="stack">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="message error">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
 
-    <div>
-      <label for="{{ form.username.id_for_label }}">Email</label>
-      {{ form.username }}
-      {% if form.username.help_text %}
-        <small>{{ form.username.help_text }}</small>
-      {% endif %}
-      {% for error in form.username.errors %}
-        <div style="color:red">{{ error }}</div>
-      {% endfor %}
+        <div class="stack">
+          <label for="{{ form.username.id_for_label }}" class="label">Email</label>
+          {{ form.username }}
+          {% for error in form.username.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="stack">
+          <label for="{{ form.password.id_for_label }}" class="label">Password</label>
+          {{ form.password }}
+          {% for error in form.password.errors %}
+            <div class="message error" style="margin: 0;">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <p class="subtext" style="margin: 0;">Don't have an account yet? <a href="{% url 'accounts:register' %}">Create one</a>.</p>
+          <button type="submit" class="btn-primary">Log in</button>
+        </div>
+      </form>
     </div>
-
-    <div>
-      <label for="{{ form.password1.id_for_label }}">Password</label>
-      {{ form.password1 }}
-      {% for error in form.password1.errors %}
-        <div style="color:red">{{ error }}</div>
-      {% endfor %}
-    </div>
-
-    <div>
-      <label for="{{ form.password2.id_for_label }}">Confirm password</label>
-      {{ form.password2 }}
-      {% for error in form.password2.errors %}
-        <div style="color:red">{{ error }}</div>
-      {% endfor %}
-    </div>
-
-    <button type="submit">Create account</button>
-  </form>
-
-  <p>Already have an account? <a href="{% url 'accounts:login' %}">Log in</a></p>
+  </section>
 {% endblock %}

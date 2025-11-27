@@ -39,6 +39,7 @@ class TrainingJob(models.Model):
     class Status(models.TextChoices):
         CREATED = "created", "Created"
         AWAITING_PAYMENT = "awaiting_payment", "Awaiting payment"
+        PAYMENT_SUBMITTED = "payment_submitted", "Payment submitted"
         PAID = "paid", "Paid"
         PROCESSING = "processing", "Processing"
         COMPLETED = "completed", "Completed"
@@ -80,6 +81,7 @@ class TrainingJob(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
+    payment_submitted_at = models.DateTimeField(null=True, blank=True)
     deadline_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
@@ -107,6 +109,14 @@ class TrainingJob(models.Model):
         self.deadline_at = when + timedelta(hours=self.DEADLINE_HOURS)
         self.status = self.Status.PAID
         self.save(update_fields=["paid_at", "deadline_at", "status"])
+
+    def submit_payment(self, when: timezone.datetime | None = None):
+        """Отмечает, что пользователь отправил оплату на проверку."""
+        if when is None:
+            when = timezone.now()
+        self.payment_submitted_at = when
+        self.status = self.Status.PAYMENT_SUBMITTED
+        self.save(update_fields=["payment_submitted_at", "status"])
 
 
 class TrainingImage(models.Model):

@@ -13,7 +13,19 @@
           <h1 style="margin: 0.65rem 0 0.35rem;">{{ job.project_name }}</h1>
           <p class="subtext">Keep this page open—status and payment instructions update here.</p>
         </div>
-        <div class="badge">{{ job.get_status_display }}</div>
+        {% with job.status as status %}
+          {% if status == "completed" %}
+            <div class="status-badge status-completed">Completed</div>
+          {% elif status == "paid" or status == "processing" %}
+            <div class="status-badge status-paid">Payment confirmed</div>
+          {% elif status == "payment_submitted" %}
+            <div class="status-badge status-submitted">Awaiting confirmation</div>
+          {% elif status == "awaiting_payment" or status == "created" %}
+            <div class="status-badge status-awaiting">Awaiting payment</div>
+          {% else %}
+            <div class="status-badge status-other">{{ job.get_status_display }}</div>
+          {% endif %}
+        {% endwith %}
       </div>
 
       <div class="grid-3" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 1rem;">
@@ -35,54 +47,87 @@
         <div class="subtext">Total price</div>
         <div style="font-weight: 800; font-size: 1.4rem; margin: 0.2rem 0;">${{ price_usd|floatformat:2 }} <span class="muted">(≈ ¥{{ price_cny|floatformat:2 }})</span></div>
       </div>
+
+      <div style="margin-top: 1rem; display: flex; gap: 0.65rem; flex-wrap: wrap;">
+        <a href="{% url 'training:job_list' %}" class="btn-secondary">Back to your jobs</a>
+      </div>
     </div>
   </section>
 
-  {% if job.status == "awaiting_payment" %}
-    <section class="section" style="margin-top: -1rem;">
+  <section class="section" style="margin-top: -1rem;">
+    {% if job.status == "awaiting_payment" or job.status == "created" %}
       <div class="card" style="padding: 1.5rem; margin-bottom: 1.25rem; background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(56,189,248,0.12)); border: 1px solid rgba(255,255,255,0.14);">
-        <h2 style="margin: 0 0 0.35rem;">Payment required</h2>
-        <p class="subtext" style="max-width: 780px;">Scan a QR below and include the note <code>AMF-{{ job.public_id }}</code>. We match your transfer and start training immediately. Delivery is typically within <strong>24 hours</strong> after confirmation.</p>
+        <h2 style="margin: 0 0 0.35rem;">Awaiting payment</h2>
+        <p class="subtext" style="max-width: 780px;">Scan a QR below and include the note <code>AMF-{{ job.public_id }}</code>. Once you finish payment, click “I have paid” so we can verify and start training.</p>
       </div>
+    {% elif payment_submitted %}
+      <div class="card" style="padding: 1.5rem; margin-bottom: 1.25rem; border: 1px solid rgba(59,130,246,0.35); background: rgba(59,130,246,0.12);">
+        <h2 style="margin: 0 0 0.35rem;">Payment submitted</h2>
+        <p class="subtext" style="max-width: 780px;">We received your payment submission. We will verify it and start training soon.</p>
+      </div>
+    {% elif job.status == "paid" or job.status == "processing" %}
+      <div class="card" style="padding: 1.5rem; margin-bottom: 1.25rem; border: 1px solid rgba(52,211,153,0.35); background: rgba(52,211,153,0.14);">
+        <h2 style="margin: 0 0 0.35rem;">Payment confirmed</h2>
+        <p class="subtext" style="max-width: 780px;">We confirmed your payment and queued training. We’ll deliver your model within 24 hours.</p>
+      </div>
+    {% endif %}
 
+    {% if job.status == "awaiting_payment" or job.status == "created" or job.status == "payment_submitted" %}
       <div class="pay-grid">
         <div class="pay-card" style="background: var(--panel-strong);">
           <h3>Pay with WeChat</h3>
-          <img
-            src="{% static 'pay/wechat_qr.JPG' %}"
-            alt="WeChat Pay QR"
-            class="pay-qr"
-          >
+          <button class="pay-qr" data-qr-src="{% static 'pay/wechat_qr.JPG' %}" style="border: none; background: transparent; padding: 0; cursor: zoom-in;">
+            <img
+              src="{% static 'pay/wechat_qr.JPG' %}"
+              alt="WeChat Pay QR"
+              style="width: 100%; height: 100%; object-fit: contain; border-radius: 0.75rem;"
+            >
+          </button>
           <p>Open <strong>WeChat</strong> and scan to send your payment.</p>
           <p><strong>Send:</strong> ${{ price_usd|floatformat:2 }} (≈ ¥{{ price_cny|floatformat:2 }})</p>
           <p><strong>Payment note:</strong> <code>AMF-{{ job.public_id }}</code></p>
-          <p class="muted">We verify payments against this note and start training immediately.</p>
+          <p class="muted">Tap the QR to enlarge. We verify payments against this note and start training immediately.</p>
         </div>
 
         <div class="pay-card" style="background: var(--panel-strong);">
           <h3>Pay with Alipay</h3>
-          <img
-            src="{% static 'pay/alipay_qr.JPG' %}"
-            alt="Alipay QR"
-            class="pay-qr"
-          >
+          <button class="pay-qr" data-qr-src="{% static 'pay/alipay_qr.JPG' %}" style="border: none; background: transparent; padding: 0; cursor: zoom-in;">
+            <img
+              src="{% static 'pay/alipay_qr.JPG' %}"
+              alt="Alipay QR"
+              style="width: 100%; height: 100%; object-fit: contain; border-radius: 0.75rem;"
+            >
+          </button>
           <p>Open <strong>Alipay</strong> and scan to send your payment.</p>
           <p><strong>Send:</strong> ${{ price_usd|floatformat:2 }} (≈ ¥{{ price_cny|floatformat:2 }})</p>
           <p><strong>Payment note:</strong> <code>AMF-{{ job.public_id }}</code></p>
-          <p class="muted">We verify payments against this note and start training immediately.</p>
+          <p class="muted">Tap the QR to enlarge. We verify payments against this note and start training immediately.</p>
         </div>
       </div>
+
+      {% if show_submit_payment %}
+        <div class="card" style="padding: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+          <div>
+            <h3 style="margin: 0 0 0.35rem;">Already paid?</h3>
+            <p class="subtext" style="margin: 0;">Tap the button below so we can verify your transfer and start the 24h countdown.</p>
+          </div>
+          <form method="post" action="{% url 'training:job_submit_payment' job.public_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary">I have paid — submit payment</button>
+          </form>
+        </div>
+      {% endif %}
 
       <div class="pay-card" style="background: rgba(255,255,255,0.03); border-style: dashed;">
         <h3 style="margin-top: 0;">What happens next</h3>
         <ul style="padding-left: 1.2rem; color: var(--muted); line-height: 1.5;">
           <li>We match your transfer using the note <code>AMF-{{ job.public_id }}</code>.</li>
-          <li>Once confirmed, your training job moves to processing automatically.</li>
-          <li>Delivery is guaranteed within <strong>24 hours</strong> after confirmation.</li>
+          <li>Click “I have paid” so our team can verify and move your job forward.</li>
+          <li>Once confirmed, training starts and the 24h timer begins.</li>
         </ul>
       </div>
-    </section>
-  {% endif %}
+    {% endif %}
+  </section>
 
   {% if countdown_seconds is not None %}
     <section class="section" style="margin-top: 1.2rem;">
@@ -143,4 +188,58 @@
       </div>
     </section>
   {% endif %}
+
+  <div class="qr-modal-backdrop" id="qrModal" aria-hidden="true">
+    <div class="qr-modal">
+      <button class="qr-modal-close" type="button" aria-label="Close">×</button>
+      <img src="" alt="Payment QR code enlarged" id="qrModalImage">
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    (function() {
+      const modal = document.getElementById("qrModal");
+      const modalImg = document.getElementById("qrModalImage");
+      const closeBtn = modal ? modal.querySelector(".qr-modal-close") : null;
+
+      if (!modal || !modalImg) return;
+
+      function openModal(src, alt) {
+        modalImg.src = src;
+        modalImg.alt = alt || "Payment QR code";
+        modal.classList.add("active");
+        modal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeModal() {
+        modal.classList.remove("active");
+        modal.setAttribute("aria-hidden", "true");
+      }
+
+      modal.addEventListener("click", function (evt) {
+        if (evt.target === modal) {
+          closeModal();
+        }
+      });
+
+      if (closeBtn) {
+        closeBtn.addEventListener("click", closeModal);
+      }
+
+      document.querySelectorAll(".pay-qr").forEach(function(btn) {
+        btn.addEventListener("click", function(evt) {
+          evt.preventDefault();
+          const src = btn.getAttribute("data-qr-src");
+          const img = btn.querySelector("img");
+          if (src) {
+            openModal(src, img ? img.alt : "Payment QR code");
+          } else if (img && img.src) {
+            window.open(img.src, "_blank");
+          }
+        });
+      });
+    })();
+  </script>
 {% endblock %}
