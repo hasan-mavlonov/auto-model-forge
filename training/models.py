@@ -1,15 +1,11 @@
 # training/models.py
 import uuid
 from datetime import timedelta
-from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-
-from django.conf import settings
-from django.db import models
 
 
 class ModelType(models.Model):

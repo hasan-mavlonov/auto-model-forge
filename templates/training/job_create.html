@@ -7,6 +7,14 @@
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
+    {% if form.non_field_errors %}
+      <div style="color: red; margin-bottom: 1rem;">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <div>
       <label for="{{ form.project_name.id_for_label }}">Project name</label>
       {{ form.project_name }}
