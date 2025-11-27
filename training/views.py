@@ -1,9 +1,8 @@
 # training/views.py
+from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse
 from django.views.generic import FormView, DetailView
-from django.shortcuts import redirect, get_object_or_404
-
+from django.utils import timezone
 from .forms import TrainingJobCreateForm
 from .models import TrainingJob, TrainingImage
 from .services import calculate_job_price
@@ -58,6 +57,20 @@ class TrainingJobDetailView(LoginRequiredMixin, DetailView):
     slug_url_kwarg = "public_id"
 
     def get_queryset(self):
-        # Пользователь может видеть только свои заказы
         qs = super().get_queryset()
         return qs.filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        job: TrainingJob = self.object
+
+        countdown_seconds = None
+        if job.deadline_at and job.status in {
+            TrainingJob.Status.PAID,
+            TrainingJob.Status.PROCESSING,
+        }:
+            remaining = job.deadline_at - timezone.now()
+            countdown_seconds = max(int(remaining.total_seconds()), 0)
+
+        ctx["countdown_seconds"] = countdown_seconds
+        return ctx

@@ -2,6 +2,8 @@
 from django.urls import path
 from . import views
 
+app_name = "payments"
+
 urlpatterns = [
-    # например, потом тут будет Stripe checkout create + webhook test page
+    path("success/<uuid:public_id>/", views.PaymentSuccessView.as_view(), name="success"),
 ]

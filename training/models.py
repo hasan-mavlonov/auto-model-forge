@@ -1,6 +1,12 @@
 # training/models.py
 import uuid
+from datetime import timedelta
 from decimal import Decimal
+
+from django.conf import settings
+from django.db import models
+from django.urls import reverse
+from django.utils import timezone
 
 from django.conf import settings
 from django.db import models
@@ -20,7 +26,7 @@ class ModelType(models.Model):
 
 class BaseModel(models.Model):
     """Base SDXL / SD1.5 model that we fine-tune against."""
-    name = models.CharField(max_length=100)        # "SDXL 1.0"
+    name = models.CharField(max_length=100)  # "SDXL 1.0"
     identifier = models.CharField(
         max_length=255,
         help_text="Internal or HF identifier, e.g. stabilityai/stable-diffusion-xl-base-1.0",
@@ -44,8 +50,8 @@ class TrainingJob(models.Model):
         REFUNDED = "refunded", "Refunded"
         EXPIRED = "expired", "Expired"
 
-    # неудобно светить автоинкрементные id,
-    # лучше иметь внешний UUID для URL’ов
+    DEADLINE_HOURS = 24
+
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
 
     user = models.ForeignKey(
@@ -56,8 +62,8 @@ class TrainingJob(models.Model):
 
     project_name = models.CharField(max_length=100)
 
-    model_type = models.ForeignKey(ModelType, on_delete=models.PROTECT)
-    base_model = models.ForeignKey(BaseModel, on_delete=models.PROTECT)
+    model_type = models.ForeignKey("ModelType", on_delete=models.PROTECT)
+    base_model = models.ForeignKey("BaseModel", on_delete=models.PROTECT)
 
     num_images = models.PositiveIntegerField(default=0)
 
@@ -84,13 +90,27 @@ class TrainingJob(models.Model):
     def __str__(self) -> str:
         return f"{self.project_name} ({self.public_id})"
 
+    def get_absolute_url(self):
+        return reverse("training:job_detail", kwargs={"public_id": self.public_id})
+
     @property
     def is_refundable(self) -> bool:
-        """Потом сюда можно положить бизнес-логику по дедлайну."""
         return (
-            self.status in {self.Status.PAID, self.Status.PROCESSING}
-            and self.deadline_at is not None
+                self.status in {self.Status.PAID, self.Status.PROCESSING}
+                and self.deadline_at is not None
         )
+
+    def mark_as_paid(self, when: timezone.datetime | None = None):
+        """
+        Вызывается после успешной оплаты.
+        Ставит paid_at, deadline_at и статус PAID.
+        """
+        if when is None:
+            when = timezone.now()
+        self.paid_at = when
+        self.deadline_at = when + timedelta(hours=self.DEADLINE_HOURS)
+        self.status = self.Status.PAID
+        self.save(update_fields=["paid_at", "deadline_at", "status"])
 
 
 class TrainingImage(models.Model):
