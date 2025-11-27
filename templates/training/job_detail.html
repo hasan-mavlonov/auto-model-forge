@@ -72,7 +72,7 @@
       </div>
     {% endif %}
 
-    {% if job.status in "awaiting_payment,created,payment_submitted".split(',') %}
+    {% if job.status == "awaiting_payment" or job.status == "created" or job.status == "payment_submitted" %}
       <div class="pay-grid">
         <div class="pay-card" style="background: var(--panel-strong);">
           <h3>Pay with WeChat</h3>
