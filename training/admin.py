@@ -29,6 +29,7 @@ def mark_as_paid(modeladmin, request, queryset):
         if job.status in {
             TrainingJob.Status.CREATED,
             TrainingJob.Status.AWAITING_PAYMENT,
+            TrainingJob.Status.PAYMENT_SUBMITTED,
         }:
             job.mark_as_paid()
             updated += 1

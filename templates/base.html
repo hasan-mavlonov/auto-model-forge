@@ -110,6 +110,24 @@
             margin-bottom: 1.5rem;
         }
 
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.65rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .status-awaiting { background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.4); color: #fef08a; }
+        .status-submitted { background: rgba(59, 130, 246, 0.14); border-color: rgba(59, 130, 246, 0.4); color: #bfdbfe; }
+        .status-paid { background: rgba(52, 211, 153, 0.14); border-color: rgba(52, 211, 153, 0.4); color: #bbf7d0; }
+        .status-completed { background: rgba(124, 58, 237, 0.14); border-color: rgba(124, 58, 237, 0.4); color: #ddd6fe; }
+        .status-other { background: rgba(248, 113, 113, 0.18); border-color: rgba(248, 113, 113, 0.4); color: #fecdd3; }
+
         .message {
             padding: 0.85rem 1rem;
             border-radius: 0.75rem;
@@ -162,6 +180,39 @@
             border-radius: 0.35rem;
             font-size: 0.85em;
             border: 1px solid var(--border);
+        }
+
+        .qr-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            z-index: 80;
+        }
+
+        .qr-modal-backdrop.active { display: flex; }
+
+        .qr-modal {
+            background: #0b1021;
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--glow);
+            max-width: min(520px, 94vw);
+        }
+
+        .qr-modal img { width: 100%; height: auto; display: block; border-radius: 0.5rem; }
+
+        .qr-modal-close {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-weight: 700;
+            cursor: pointer;
+            float: right;
         }
 
         footer {
@@ -273,6 +324,12 @@
 
     <nav class="nav-links">
         <a href="{% url 'training:job_create' %}">Train your model</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'training:job_list' %}">My jobs</a>
+            {% if user.is_staff %}
+                <a href="{% url 'staff_job_list' %}">Admin jobs</a>
+            {% endif %}
+        {% endif %}
 
         {% if user.is_authenticated %}
             <span class="user-chip">

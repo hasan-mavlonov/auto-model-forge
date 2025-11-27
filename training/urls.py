@@ -6,7 +6,11 @@ app_name = "training"
 
 urlpatterns = [
     path("new/", views.TrainingJobCreateView.as_view(), name="job_create"),
+    path("jobs/", views.TrainingJobListView.as_view(), name="job_list"),
+    path(
+        "<uuid:public_id>/submit-payment/",
+        views.SubmitPaymentView.as_view(),
+        name="job_submit_payment",
+    ),
     path("<uuid:public_id>/", views.TrainingJobDetailView.as_view(), name="job_detail"),
-    # позже можем добавить список:
-    # path("", views.TrainingJobListView.as_view(), name="job_list"),
 ]
