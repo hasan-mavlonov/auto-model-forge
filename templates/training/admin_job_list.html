@@ -12,11 +12,11 @@
   </section>
 
   <div class="stack">
-    {% for label, statuses in status_groups.items %}
+    {% for group in grouped_jobs %}
       <div class="card" style="padding: 1rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-          <h3 style="margin: 0;">{{ label }}</h3>
-          <span class="pill">{{ group_counts[label] }} in this bucket</span>
+          <h3 style="margin: 0;">{{ group.label }}</h3>
+          <span class="pill">{{ group.jobs|length }} in this bucket</span>
         </div>
         <div style="overflow-x: auto; margin-top: 0.75rem;">
           <table style="width: 100%; border-collapse: collapse; min-width: 860px;">
@@ -32,14 +32,13 @@
               </tr>
             </thead>
             <tbody>
-              {% if group_counts[label] == 0 %}
+              {% if group.jobs|length == 0 %}
                 <tr>
                   <td colspan="7" style="padding: 0.65rem;" class="subtext">No jobs in this bucket.</td>
                 </tr>
               {% endif %}
 
-              {% for job in jobs %}
-                {% if job.status in statuses %}
+              {% for job in group.jobs %}
                   <tr style="border-top: 1px solid var(--border);">
                     <td style="padding: 0.65rem;">
                       <div style="font-weight: 700;">{{ job.project_name }}</div>
@@ -81,7 +80,6 @@
                       </form>
                     </td>
                   </tr>
-                {% endif %}
               {% endfor %}
             </tbody>
           </table>
