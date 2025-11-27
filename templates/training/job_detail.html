@@ -9,13 +9,15 @@
   <p><strong>Model type:</strong> {{ job.model_type.name }}</p>
   <p><strong>Base model:</strong> {{ job.base_model.name }}</p>
   <p><strong>Images:</strong> {{ job.num_images }}</p>
-  <p><strong>Total price:</strong> ${{ job.total_price }}</p>
+  <p><strong>Total price:</strong> ${{ price_usd|floatformat:2 }} (≈ ¥{{ price_cny|floatformat:2 }})</p>
 
     {% if job.status == "awaiting_payment" %}
     <h2>Payment required</h2>
-    <p>
-      To start training, please send a payment of
-      <strong>${{ job.total_price }}</strong>.
+    <p style="max-width: 640px;">
+      Payments are handled manually right now. Please include the reference
+      <code>AMF-{{ job.public_id }}</code> in your payment note so we can match it
+      quickly. Training starts as soon as we verify the transfer, and delivery is
+      within <strong>24 hours</strong> after confirmation.
     </p>
 
     <div class="pay-grid">
@@ -26,11 +28,10 @@
           alt="WeChat Pay QR"
           class="pay-qr"
         >
-        <p>1. Open <strong>WeChat</strong> and scan this QR code.</p>
-        <p>2. Send <strong>{{ job.total_price }} USD</strong> (or equivalent in CNY).</p>
-        <p>3. In the comment / note, please write:<br>
-          <code>AMF-{{ job.public_id }}</code>
-        </p>
+        <p>Open <strong>WeChat</strong> and scan this code to send your payment.</p>
+        <p><strong>Send:</strong> ${{ price_usd|floatformat:2 }} (≈ ¥{{ price_cny|floatformat:2 }})</p>
+        <p><strong>Payment note:</strong> <code>AMF-{{ job.public_id }}</code></p>
+        <p class="text-sm" style="color: #4b5563;">We verify payments against this note and start training immediately.</p>
       </div>
 
       <div class="pay-card">
@@ -40,25 +41,26 @@
           alt="Alipay QR"
           class="pay-qr"
         >
-        <p>1. Open <strong>Alipay</strong> and scan this QR code.</p>
-        <p>2. Send <strong>{{ job.total_price }} USD</strong> (or equivalent in CNY).</p>
-        <p>3. In the comment / note, please write:<br>
-          <code>AMF-{{ job.public_id }}</code>
-        </p>
+        <p>Open <strong>Alipay</strong> and scan this code to send your payment.</p>
+        <p><strong>Send:</strong> ${{ price_usd|floatformat:2 }} (≈ ¥{{ price_cny|floatformat:2 }})</p>
+        <p><strong>Payment note:</strong> <code>AMF-{{ job.public_id }}</code></p>
+        <p class="text-sm" style="color: #4b5563;">We verify payments against this note and start training immediately.</p>
       </div>
     </div>
 
-    <p style="max-width: 520px;">
-      After you complete the payment, we will manually verify it using the note
-      <code>AMF-{{ job.public_id }}</code> and start training your model.
-      You will receive your model within <strong>24 hours</strong> after payment
-      confirmation.
-    </p>
+    <div class="pay-card" style="background: #f9fafb; border-style: dashed;">
+      <h3 style="margin-top: 0;">What happens next</h3>
+      <ul style="padding-left: 1.2rem; color: #374151;">
+        <li>We match your transfer using the note <code>AMF-{{ job.public_id }}</code>.</li>
+        <li>Once confirmed, your training job moves to processing automatically.</li>
+        <li>Delivery is guaranteed within <strong>24 hours</strong> after confirmation.</li>
+      </ul>
+    </div>
   {% endif %}
 
 
 
-  {% if countdown_seconds %}
+  {% if countdown_seconds is not None %}
     <p><strong>Training deadline:</strong> {{ job.deadline_at }}</p>
     <p>Time left for delivering your model:
       <span id="countdown"></span>
@@ -66,12 +68,17 @@
 
     <script>
       (function() {
-        let remaining = {{ countdown_seconds|default:0 }};
         const el = document.getElementById("countdown");
-        if (!el) return;
+        let remaining = Number("{{ countdown_seconds|default_if_none:0 }}");
+
+        if (!el || !Number.isFinite(remaining) || remaining < 0) {
+          if (el) {
+            el.textContent = "00:00:00";
+          }
+          return;
+        }
 
         function tick() {
-          if (remaining < 0) return;
           const hours = Math.floor(remaining / 3600);
           const minutes = Math.floor((remaining % 3600) / 60);
           const seconds = remaining % 60;

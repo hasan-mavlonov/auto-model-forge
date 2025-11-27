@@ -1,12 +1,16 @@
 # training/views.py
-from django.shortcuts import redirect
+from decimal import Decimal
+
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import FormView, DetailView
+from django.shortcuts import redirect
 from django.utils import timezone
+from django.views.generic import DetailView, FormView
+
 from .forms import TrainingJobCreateForm
 from .models import TrainingJob, TrainingImage
 from .services import calculate_job_price
-from django.conf import settings
+
 
 class TrainingJobCreateView(LoginRequiredMixin, FormView):
     template_name = "training/job_create.html"
@@ -72,5 +76,15 @@ class TrainingJobDetailView(LoginRequiredMixin, DetailView):
             remaining = job.deadline_at - timezone.now()
             countdown_seconds = max(int(remaining.total_seconds()), 0)
 
-        ctx["countdown_seconds"] = countdown_seconds
+        price_usd = job.total_price
+        rate = Decimal(str(settings.USD_TO_CNY_RATE))
+        price_cny = (price_usd * rate).quantize(Decimal("0.01"))
+
+        ctx.update(
+            {
+                "countdown_seconds": countdown_seconds,
+                "price_usd": price_usd,
+                "price_cny": price_cny,
+            }
+        )
         return ctx
