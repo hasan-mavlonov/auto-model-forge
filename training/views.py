@@ -6,7 +6,7 @@ from django.utils import timezone
 from .forms import TrainingJobCreateForm
 from .models import TrainingJob, TrainingImage
 from .services import calculate_job_price
-
+from django.conf import settings
 
 class TrainingJobCreateView(LoginRequiredMixin, FormView):
     template_name = "training/job_create.html"

@@ -1,0 +1,37 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# --- Virtual envs ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Django ---
+*.log
+db.sqlite3
+media/
+staticfiles/
+static_root/
+staticfiles/
+local_settings.py
+
+# Collected static (если будешь делать collectstatic)
+static-collected/
+
+# --- Editor / IDE ---
+.idea/
+.vscode/
+*.iml
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db

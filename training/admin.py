@@ -20,6 +20,10 @@ class TrainingImageInline(admin.TabularInline):
     model = TrainingImage
     extra = 0
 
+def mark_as_paid(modeladmin, request, queryset):
+    for job in queryset:
+        job.mark_as_paid()
+mark_as_paid.short_description = "Mark selected jobs as PAID and start 24h deadline"
 
 @admin.register(TrainingJob)
 class TrainingJobAdmin(admin.ModelAdmin):
@@ -40,9 +44,11 @@ class TrainingJobAdmin(admin.ModelAdmin):
     search_fields = ("project_name", "user__username", "public_id")
     readonly_fields = ("public_id", "created_at", "paid_at", "deadline_at", "completed_at")
     inlines = [TrainingImageInline]
+    actions = [mark_as_paid]
 
 
 @admin.register(ModelArtifact)
 class ModelArtifactAdmin(admin.ModelAdmin):
     list_display = ("job", "download_url", "size_mb", "created_at")
     search_fields = ("job__project_name", "job__public_id")
+

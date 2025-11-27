@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
   <h1>Training job: {{ job.project_name }}</h1>
@@ -10,15 +11,52 @@
   <p><strong>Images:</strong> {{ job.num_images }}</p>
   <p><strong>Total price:</strong> ${{ job.total_price }}</p>
 
-  {% if job.status == "awaiting_payment" %}
-    <p>Next step: pay for this job.</p>
+    {% if job.status == "awaiting_payment" %}
+    <h2>Payment required</h2>
+    <p>
+      To start training, please send a payment of
+      <strong>${{ job.total_price }}</strong>.
+    </p>
 
-    {# ВРЕМЕННО: имитация успешной оплаты.
-       Потом здесь будет Stripe Checkout. #}
-    <a href="{% url 'payments:success' job.public_id %}">
-      <button type="button">Pay (mock, mark as paid)</button>
-    </a>
+    <div class="pay-grid">
+      <div class="pay-card">
+        <h3>Pay with WeChat</h3>
+        <img
+          src="{% static 'pay/wechat_qr.JPG' %}"
+          alt="WeChat Pay QR"
+          class="pay-qr"
+        >
+        <p>1. Open <strong>WeChat</strong> and scan this QR code.</p>
+        <p>2. Send <strong>{{ job.total_price }} USD</strong> (or equivalent in CNY).</p>
+        <p>3. In the comment / note, please write:<br>
+          <code>AMF-{{ job.public_id }}</code>
+        </p>
+      </div>
+
+      <div class="pay-card">
+        <h3>Pay with Alipay</h3>
+        <img
+          src="{% static 'pay/alipay_qr.JPG' %}"
+          alt="Alipay QR"
+          class="pay-qr"
+        >
+        <p>1. Open <strong>Alipay</strong> and scan this QR code.</p>
+        <p>2. Send <strong>{{ job.total_price }} USD</strong> (or equivalent in CNY).</p>
+        <p>3. In the comment / note, please write:<br>
+          <code>AMF-{{ job.public_id }}</code>
+        </p>
+      </div>
+    </div>
+
+    <p style="max-width: 520px;">
+      After you complete the payment, we will manually verify it using the note
+      <code>AMF-{{ job.public_id }}</code> and start training your model.
+      You will receive your model within <strong>24 hours</strong> after payment
+      confirmation.
+    </p>
   {% endif %}
+
+
 
   {% if countdown_seconds %}
     <p><strong>Training deadline:</strong> {{ job.deadline_at }}</p>
