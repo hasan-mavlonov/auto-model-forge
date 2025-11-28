@@ -50,6 +50,7 @@
 
       <div style="margin-top: 1rem; display: flex; gap: 0.65rem; flex-wrap: wrap;">
         <a href="{% url 'training:job_list' %}" class="btn-secondary">Back to your jobs</a>
+        <a href="{% url 'training:job_images_download' job.public_id %}" class="btn-secondary">Download training images</a>
       </div>
     </div>
   </section>
@@ -58,7 +59,7 @@
     {% if job.status == "awaiting_payment" or job.status == "created" %}
       <div class="card" style="padding: 1.5rem; margin-bottom: 1.25rem; background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(56,189,248,0.12)); border: 1px solid rgba(255,255,255,0.14);">
         <h2 style="margin: 0 0 0.35rem;">Awaiting payment</h2>
-        <p class="subtext" style="max-width: 780px;">Scan the QR below via Alipay and include the note <code>AMF-{{ job.public_id }}</code>. Once you finish payment, click “I have paid” so we can verify and start training.</p>
+        <p class="subtext" style="max-width: 780px;">Scan the QR below via Alipay and include the note <code>{{ job.payment_reference }}</code>. Once you finish payment, click “I have paid” so we can verify and start training.</p>
       </div>
     {% elif payment_submitted %}
       <div class="card" style="padding: 1.5rem; margin-bottom: 1.25rem; border: 1px solid rgba(59,130,246,0.35); background: rgba(59,130,246,0.12);">
@@ -85,7 +86,7 @@
           </button>
           <p>Open <strong>Alipay</strong> and scan to send your payment.</p>
           <p><strong>Send:</strong> ${{ price_usd|floatformat:2 }} (≈ ¥{{ price_cny|floatformat:2 }})</p>
-          <p><strong>Payment note:</strong> <code>AMF-{{ job.public_id }}</code></p>
+          <p><strong>Payment note:</strong> <code>{{ job.payment_reference }}</code></p>
           <p class="muted">Tap the QR to enlarge. We verify payments against this note and start training immediately.</p>
         </div>
       </div>
@@ -106,7 +107,7 @@
       <div class="pay-card" style="background: rgba(255,255,255,0.03); border-style: dashed;">
         <h3 style="margin-top: 0;">What happens next</h3>
         <ul style="padding-left: 1.2rem; color: var(--muted); line-height: 1.5;">
-          <li>We match your transfer using the note <code>AMF-{{ job.public_id }}</code>.</li>
+          <li>We match your transfer using the note <code>{{ job.payment_reference }}</code>.</li>
           <li>Click “I have paid” so our team can verify and move your job forward.</li>
           <li>Once confirmed, training starts and the 24h timer begins.</li>
         </ul>

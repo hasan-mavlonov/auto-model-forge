@@ -12,5 +12,10 @@ urlpatterns = [
         views.SubmitPaymentView.as_view(),
         name="job_submit_payment",
     ),
+    path(
+        "<uuid:public_id>/download-images/",
+        views.JobImagesDownloadView.as_view(),
+        name="job_images_download",
+    ),
     path("<uuid:public_id>/", views.TrainingJobDetailView.as_view(), name="job_detail"),
 ]
