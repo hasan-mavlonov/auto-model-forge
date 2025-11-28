@@ -126,6 +126,10 @@ USD_TO_CNY_RATE = 7.2
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Allow large multi-file uploads so form-level validation can handle limits gracefully
+# (e.g., TrainingJobCreateForm caps uploads at 500 images).
+DATA_UPLOAD_MAX_NUMBER_FILES = 5000
+
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 
