@@ -8,12 +8,20 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.generic import FormView, TemplateView, View
 
-from django.core.mail import send_mail
 from django.conf import settings
+
+from pathlib import Path
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 from .forms import UserRegistrationForm
 
 User = get_user_model()
+
+from django.core.mail import EmailMultiAlternatives
 
 
 def send_activation_email(user, request):
@@ -25,15 +33,27 @@ def send_activation_email(user, request):
     )
 
     subject = "Activate your Auto Model Forge account"
-    message = (
-        f"Hi!\n\n"
-        f"To finish your registration at Auto Model Forge, please click the link below:\n\n"
-        f"{activation_url}\n\n"
-        f"If you didn't sign up, you can ignore this email."
-    )
+    from_email = settings.DEFAULT_FROM_EMAIL
+    to = [user.email]
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
-    send_mail(subject, message, from_email, [user.email])
+    text_content = f"Activate your account: {activation_url}"
+    html_content = f"""
+        <h2>Welcome to Auto Model Forge</h2>
+        <p>Click the button below to activate your account:</p>
+        <a href="{activation_url}" style="
+            background:#4f46e5;
+            color:white;
+            padding:12px 20px;
+            border-radius:6px;
+            text-decoration:none;
+            display:inline-block;">
+            Activate Account
+        </a>
+    """
+
+    msg = EmailMultiAlternatives(subject, text_content, from_email, to)
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
 
 
 class RegisterView(FormView):
