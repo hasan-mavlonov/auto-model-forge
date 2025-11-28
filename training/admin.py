@@ -60,6 +60,7 @@ class TrainingJobAdmin(admin.ModelAdmin):
         "base_model",
         "num_images",
         "total_price",
+        "payment_reference",
         "status",
         "created_at",
         "paid_at",
@@ -67,8 +68,21 @@ class TrainingJobAdmin(admin.ModelAdmin):
         "completed_at",
     )
     list_filter = ("status", "model_type", "base_model", "created_at")
-    search_fields = ("project_name", "user__username", "public_id")
-    readonly_fields = ("public_id", "created_at", "paid_at", "deadline_at", "completed_at")
+    search_fields = (
+        "project_name",
+        "user__username",
+        "public_id",
+        "payment_reference",
+        "stripe_checkout_session_id",
+    )
+    readonly_fields = (
+        "public_id",
+        "payment_reference",
+        "created_at",
+        "paid_at",
+        "deadline_at",
+        "completed_at",
+    )
     inlines = [TrainingImageInline]
     actions = [mark_as_paid]
 
