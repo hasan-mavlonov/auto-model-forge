@@ -14,7 +14,7 @@ build/
 venv/
 env/
 ENV/
-
+.env
 # --- Django ---
 *.log
 db.sqlite3
