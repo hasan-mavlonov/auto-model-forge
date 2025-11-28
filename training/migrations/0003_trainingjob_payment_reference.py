@@ -36,8 +36,19 @@ class Migration(migrations.Migration):
                 editable=False,
                 help_text="Short code used to match incoming payments",
                 max_length=20,
-                unique=True,
+                null=True,
             ),
         ),
         migrations.RunPython(populate_payment_references, migrations.RunPython.noop),
+        migrations.AlterField(
+            model_name="trainingjob",
+            name="payment_reference",
+            field=models.CharField(
+                blank=True,
+                editable=False,
+                help_text="Short code used to match incoming payments",
+                max_length=20,
+                unique=True,
+            ),
+        ),
     ]
