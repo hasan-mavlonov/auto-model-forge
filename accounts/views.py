@@ -1,6 +1,6 @@
 # accounts/views.py
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
@@ -79,3 +79,12 @@ class ActivateAccountView(View):
             return redirect("accounts:login")
 
         return render(request, "accounts/activation_invalid.html")
+
+
+class LogoutView(View):
+    """Log the user out via POST to avoid accidental sign-outs."""
+
+    def post(self, request, *args, **kwargs):
+        logout(request)
+        messages.success(request, "You have been logged out.")
+        return redirect("home")

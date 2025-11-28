@@ -58,7 +58,7 @@
     {% if job.status == "awaiting_payment" or job.status == "created" %}
       <div class="card" style="padding: 1.5rem; margin-bottom: 1.25rem; background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(56,189,248,0.12)); border: 1px solid rgba(255,255,255,0.14);">
         <h2 style="margin: 0 0 0.35rem;">Awaiting payment</h2>
-        <p class="subtext" style="max-width: 780px;">Scan a QR below and include the note <code>AMF-{{ job.public_id }}</code>. Once you finish payment, click “I have paid” so we can verify and start training.</p>
+        <p class="subtext" style="max-width: 780px;">Scan the QR below via Alipay and include the note <code>AMF-{{ job.public_id }}</code>. Once you finish payment, click “I have paid” so we can verify and start training.</p>
       </div>
     {% elif payment_submitted %}
       <div class="card" style="padding: 1.5rem; margin-bottom: 1.25rem; border: 1px solid rgba(59,130,246,0.35); background: rgba(59,130,246,0.12);">
@@ -74,21 +74,6 @@
 
     {% if job.status == "awaiting_payment" or job.status == "created" or job.status == "payment_submitted" %}
       <div class="pay-grid">
-        <div class="pay-card" style="background: var(--panel-strong);">
-          <h3>Pay with WeChat</h3>
-          <button class="pay-qr" data-qr-src="{% static 'pay/wechat_qr.JPG' %}" style="border: none; background: transparent; padding: 0; cursor: zoom-in;">
-            <img
-              src="{% static 'pay/wechat_qr.JPG' %}"
-              alt="WeChat Pay QR"
-              style="width: 100%; height: 100%; object-fit: contain; border-radius: 0.75rem;"
-            >
-          </button>
-          <p>Open <strong>WeChat</strong> and scan to send your payment.</p>
-          <p><strong>Send:</strong> ${{ price_usd|floatformat:2 }} (≈ ¥{{ price_cny|floatformat:2 }})</p>
-          <p><strong>Payment note:</strong> <code>AMF-{{ job.public_id }}</code></p>
-          <p class="muted">Tap the QR to enlarge. We verify payments against this note and start training immediately.</p>
-        </div>
-
         <div class="pay-card" style="background: var(--panel-strong);">
           <h3>Pay with Alipay</h3>
           <button class="pay-qr" data-qr-src="{% static 'pay/alipay_qr.JPG' %}" style="border: none; background: transparent; padding: 0; cursor: zoom-in;">
@@ -128,6 +113,69 @@
       </div>
     {% endif %}
   </section>
+
+  {% if user.is_staff %}
+    <section class="section" style="margin-top: 1rem;">
+      <div class="card" style="padding: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <div>
+            <h3 style="margin: 0 0 0.3rem;">Admin tools</h3>
+            <p class="subtext" style="margin: 0;">Uploaded images are visible below. Attach a trained model so the user can download it.</p>
+          </div>
+          <span class="pill">{{ job.images.count }} images</span>
+        </div>
+
+        {% if job.images.all %}
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 1rem;">
+            {% for image in job.images.all %}
+              <div class="card" style="padding: 0.35rem; background: rgba(255,255,255,0.02);">
+                <img src="{{ image.image.url }}" alt="Training image {{ forloop.counter }}" style="width: 100%; height: 160px; object-fit: cover; border-radius: 0.5rem;">
+                <p class="subtext" style="margin: 0.35rem 0 0; word-break: break-word;">{{ image.original_filename|default:"Uploaded image" }}</p>
+              </div>
+            {% empty %}
+              <p class="subtext">No images uploaded for this job.</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if artifact_form %}
+          <hr style="margin: 1.2rem 0; border-color: rgba(255,255,255,0.06);">
+          <h4 style="margin: 0 0 0.5rem;">Upload trained model</h4>
+          <form method="post" enctype="multipart/form-data" class="stack" style="gap: 0.6rem;">
+            {% csrf_token %}
+            <div>
+              <label for="id_file" style="font-weight: 600;">Model file (optional)</label>
+              {{ artifact_form.file }}
+              {% if artifact_form.file.errors %}
+                <div class="message error" style="margin-top: 0.35rem;">{{ artifact_form.file.errors|striptags }}</div>
+              {% endif %}
+            </div>
+            <div>
+              <label for="id_download_url" style="font-weight: 600;">Download URL (optional)</label>
+              {{ artifact_form.download_url }}
+              <p class="subtext" style="margin: 0.15rem 0 0;">Provide a direct link if hosting externally (e.g., HF, Drive).</p>
+              {% if artifact_form.download_url.errors %}
+                <div class="message error" style="margin-top: 0.35rem;">{{ artifact_form.download_url.errors|striptags }}</div>
+              {% endif %}
+            </div>
+            <div>
+              <label for="id_size_mb" style="font-weight: 600;">Size (MB, optional)</label>
+              {{ artifact_form.size_mb }}
+              {% if artifact_form.size_mb.errors %}
+                <div class="message error" style="margin-top: 0.35rem;">{{ artifact_form.size_mb.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            {% if artifact_form.non_field_errors %}
+              <div class="message error">{{ artifact_form.non_field_errors|striptags }}</div>
+            {% endif %}
+
+            <button type="submit" class="btn-primary" style="align-self: flex-start;">Save artifact &amp; mark completed</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
 
   {% if countdown_seconds is not None %}
     <section class="section" style="margin-top: 1.2rem;">

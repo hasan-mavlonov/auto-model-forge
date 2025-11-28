@@ -2,7 +2,7 @@
 from django import forms
 from django.forms.widgets import ClearableFileInput
 
-from .models import ModelType, BaseModel
+from .models import ModelType, BaseModel, ModelArtifact
 
 
 class MultiFileInput(ClearableFileInput):
@@ -102,4 +102,24 @@ class TrainingJobCreateForm(forms.Form):
         # Всё ок — кладём список файлов в cleaned_data["images"],
         # чтобы view мог их забрать.
         cleaned_data["images"] = files
+        return cleaned_data
+
+
+class ModelArtifactForm(forms.ModelForm):
+    """Form for staff to attach a trained model to a job."""
+
+    class Meta:
+        model = ModelArtifact
+        fields = ["file", "download_url", "size_mb"]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        file = cleaned_data.get("file")
+        download_url = cleaned_data.get("download_url")
+
+        if not file and not download_url:
+            raise forms.ValidationError(
+                "Upload a model file or provide a download URL."
+            )
+
         return cleaned_data
