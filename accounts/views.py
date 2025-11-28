@@ -10,13 +10,6 @@ from django.views.generic import FormView, TemplateView, View
 
 from django.conf import settings
 
-from pathlib import Path
-from dotenv import load_dotenv
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-load_dotenv(BASE_DIR / ".env")
-
 from .forms import UserRegistrationForm
 
 User = get_user_model()
