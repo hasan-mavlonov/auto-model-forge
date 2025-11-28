@@ -114,7 +114,7 @@ WSGI_APPLICATION = 'AutoModel_Forge.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': '/var/data/db.sqlite3',
     }
 }
 
@@ -169,7 +169,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 USD_TO_CNY_RATE = 7.2
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = '/var/data/media'
+
 
 # Allow large multi-file uploads so form-level validation can handle limits gracefully
 # (e.g., TrainingJobCreateForm caps uploads at 500 images).
