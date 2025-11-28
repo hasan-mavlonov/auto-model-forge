@@ -54,11 +54,11 @@ class TrainingJobCreateForm(forms.Form):
 
     images = MultiFileField(
         label="Training images",
-        help_text="Upload between 10 and 60 images.",
+        help_text="Upload between 10 and 500 images.",
     )
 
     MIN_IMAGES = 10
-    MAX_IMAGES = 60
+    MAX_IMAGES = 500
     ALLOWED_CONTENT_TYPES = ("image/jpeg", "image/png", "image/webp")
 
     def clean(self):

@@ -26,6 +26,7 @@
                 <th style="padding: 0.65rem;">Status</th>
                 <th style="padding: 0.65rem;">Images</th>
                 <th style="padding: 0.65rem;">Price</th>
+                <th style="padding: 0.65rem;">Payment note</th>
                 <th style="padding: 0.65rem;">Payment submitted</th>
                 <th style="padding: 0.65rem;">Deadline</th>
                 <th style="padding: 0.65rem; text-align: right;">Actions</th>
@@ -34,7 +35,7 @@
             <tbody>
               {% if group.jobs|length == 0 %}
                 <tr>
-                  <td colspan="7" style="padding: 0.65rem;" class="subtext">No jobs in this bucket.</td>
+                  <td colspan="8" style="padding: 0.65rem;" class="subtext">No jobs in this bucket.</td>
                 </tr>
               {% endif %}
 
@@ -50,6 +51,9 @@
                     </td>
                     <td style="padding: 0.65rem;">{{ job.image_count }}</td>
                     <td style="padding: 0.65rem; font-weight: 700;">${{ job.total_price|floatformat:2 }}</td>
+                    <td style="padding: 0.65rem;">
+                      <code>{{ job.payment_reference }}</code>
+                    </td>
                     <td style="padding: 0.65rem;">
                       {% if job.payment_submitted_at %}
                         <span class="status-badge status-submitted">Yes — {{ job.payment_submitted_at|date:"Y-m-d H:i" }}</span>

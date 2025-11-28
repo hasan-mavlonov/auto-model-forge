@@ -1,4 +1,7 @@
 # training/views.py
+import os
+import tempfile
+import zipfile
 from decimal import Decimal
 
 from django.conf import settings
@@ -6,6 +9,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -180,6 +184,36 @@ class SubmitPaymentView(LoginRequiredMixin, View):
             "We received your payment submission. We will verify it and start training soon.",
         )
         return redirect(job)
+
+
+class JobImagesDownloadView(LoginRequiredMixin, View):
+    """Allow job owners and staff to download training images as a ZIP archive."""
+
+    def get(self, request, public_id):
+        job = get_object_or_404(TrainingJob, public_id=public_id)
+
+        if not (request.user.is_staff or job.user_id == request.user.id):
+            raise Http404()
+
+        images = list(job.images.all().order_by("uploaded_at"))
+        if not images:
+            messages.warning(request, "No training images available to download for this job.")
+            return redirect(job)
+
+        archive = tempfile.SpooledTemporaryFile(max_size=1024 * 1024 * 100)
+
+        with zipfile.ZipFile(archive, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+            for idx, image in enumerate(images, start=1):
+                filename = image.original_filename or os.path.basename(image.image.name)
+                if not filename:
+                    filename = f"image-{idx}.jpg"
+
+                safe_name = f"{idx:03d}-{filename}"
+                zip_file.write(image.image.path, arcname=safe_name)
+
+        archive.seek(0)
+        filename = f"{job.project_name}_images.zip"
+        return FileResponse(archive, as_attachment=True, filename=filename)
 
 
 @method_decorator(staff_member_required, name="dispatch")

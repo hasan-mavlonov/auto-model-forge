@@ -1,5 +1,7 @@
 # training/models.py
+import secrets
 import uuid
+from collections.abc import Iterable
 from datetime import timedelta
 
 from django.conf import settings
@@ -79,6 +81,14 @@ class TrainingJob(models.Model):
         help_text="Stripe Checkout Session ID",
     )
 
+    payment_reference = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        editable=False,
+        help_text="Short code used to match incoming payments",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     payment_submitted_at = models.DateTimeField(null=True, blank=True)
@@ -117,6 +127,29 @@ class TrainingJob(models.Model):
         self.payment_submitted_at = when
         self.status = self.Status.PAYMENT_SUBMITTED
         self.save(update_fields=["payment_submitted_at", "status"])
+
+    @classmethod
+    def generate_payment_reference(cls) -> str:
+        """Generate a short, unique payment code that fits payment memo limits."""
+
+        def _candidates() -> Iterable[str]:
+            prefix = "AMF-"
+            while True:
+                yield f"{prefix}{secrets.token_hex(4).upper()}"
+
+        for candidate in _candidates():
+            if not cls.objects.filter(payment_reference=candidate).exists():
+                return candidate
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+
+        if not self.payment_reference:
+            self.payment_reference = self.generate_payment_reference()
+            if update_fields is not None and "payment_reference" not in update_fields:
+                kwargs["update_fields"] = list(update_fields) + ["payment_reference"]
+
+        super().save(*args, **kwargs)
 
 
 class TrainingImage(models.Model):
