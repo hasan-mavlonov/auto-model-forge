@@ -73,7 +73,22 @@
             transition: opacity 0.2s ease, color 0.2s ease;
         }
 
+        .nav-logout-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            font: inherit;
+            padding: 0;
+            cursor: pointer;
+            opacity: 0.9;
+        }
+
         .nav-links a:hover {
+            opacity: 1;
+            color: #fff;
+        }
+
+        .nav-logout-btn:hover {
             opacity: 1;
             color: #fff;
         }
@@ -335,7 +350,10 @@
             <span class="user-chip">
           {{ user.username }}
         </span>
-            <a href="{% url 'accounts:logout' %}">Logout</a>
+            <form action="{% url 'accounts:logout' %}" method="post" style="margin: 0;">
+              {% csrf_token %}
+              <button type="submit" class="nav-logout-btn">Logout</button>
+            </form>
         {% else %}
             <a href="{% url 'accounts:login' %}">Login</a>
             <a href="{% url 'accounts:register' %}" class="nav-cta">Get started</a>

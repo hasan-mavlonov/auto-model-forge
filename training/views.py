@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView
 
-from .forms import TrainingJobCreateForm
+from .forms import ModelArtifactForm, TrainingJobCreateForm
 from .models import TrainingJob, TrainingImage
 from .services import calculate_job_price
 
@@ -66,6 +66,40 @@ class TrainingJobDetailView(LoginRequiredMixin, DetailView):
     slug_field = "public_id"
     slug_url_kwarg = "public_id"
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        if not request.user.is_staff:
+            messages.error(request, "You do not have permission to update this job.")
+            return redirect(self.object)
+
+        artifact_instance = getattr(self.object, "artifact", None)
+        form = ModelArtifactForm(
+            request.POST,
+            request.FILES,
+            instance=artifact_instance,
+        )
+
+        if form.is_valid():
+            artifact = form.save(commit=False)
+            artifact.job = self.object
+            artifact.save()
+
+            if self.object.status != TrainingJob.Status.COMPLETED:
+                now = timezone.now()
+                self.object.status = TrainingJob.Status.COMPLETED
+                self.object.completed_at = now
+                self.object.save(update_fields=["status", "completed_at"])
+
+            messages.success(
+                request,
+                "Model artifact uploaded. The job is marked as completed for the user to download.",
+            )
+            return redirect(self.object)
+
+        ctx = self.get_context_data(artifact_form=form)
+        return self.render_to_response(ctx)
+
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.user.is_staff:
@@ -99,6 +133,12 @@ class TrainingJobDetailView(LoginRequiredMixin, DetailView):
                     TrainingJob.Status.AWAITING_PAYMENT,
                     TrainingJob.Status.CREATED,
                 },
+                "artifact_form": kwargs.get(
+                    "artifact_form",
+                    ModelArtifactForm(instance=getattr(job, "artifact", None))
+                    if self.request.user.is_staff
+                    else None,
+                ),
             }
         )
         return ctx
