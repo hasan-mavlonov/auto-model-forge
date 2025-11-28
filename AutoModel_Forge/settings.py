@@ -13,25 +13,55 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
+
+def load_env_file(dotenv_path: Path) -> None:
+    """Lightweight .env loader to avoid a runtime dependency."""
+
+    if not dotenv_path.exists():
+        return
+
+    for line in dotenv_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env so email credentials (and other secrets)
 # are available when settings is imported.
-load_dotenv(BASE_DIR / ".env")
+load_env_file(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ImproperlyConfigured("SECRET_KEY must be set in the environment")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ['*']
+raw_allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
+if raw_allowed_hosts:
+    ALLOWED_HOSTS = [host.strip() for host in raw_allowed_hosts.split(",") if host.strip()]
+elif DEBUG:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = []
+
+raw_csrf_trusted_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in raw_csrf_trusted_origins.split(",") if origin.strip()]
 
 # Application definition
 
@@ -126,6 +156,14 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    }
+}
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 USD_TO_CNY_RATE = 7.2
@@ -147,13 +185,12 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
-EMAIL_HOST_USER = "hmavlanov79@gmail.com"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "hmavlanov79@gmail.com")
 # Gmail app passwords are commonly written with spaces for readability
 # (e.g., "aaaa aaaa aaaa aaaa"). Remove spaces so authentication succeeds.
 EMAIL_HOST_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "").replace(" ", "")
 
-
-DEFAULT_FROM_EMAIL = "Auto Model Forge <hmavlanov79@gmail.com>"
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", f"Auto Model Forge <{EMAIL_HOST_USER}>")
 
 
 
