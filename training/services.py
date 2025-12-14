@@ -24,7 +24,7 @@ def queue_lora_job(
     learning_rate: Decimal | None = None,
     train_text_encoder: bool | None = None,
 ) -> LoRATrainingJob:
-    """Create or update a LoRA training workflow entry for a paid job."""
+    """Create or update a LoRA training workflow entry for an active job."""
 
     defaults = {
         "trigger_token": trigger_token,

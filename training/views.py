@@ -14,12 +14,13 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.text import slugify
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView
 
 from .forms import ModelArtifactForm, TrainingJobCreateForm
 from .models import TrainingJob, TrainingImage
-from .services import calculate_job_price
+from .services import calculate_job_price, queue_lora_job
 
 
 class TrainingJobCreateView(LoginRequiredMixin, FormView):
@@ -56,8 +57,13 @@ class TrainingJobCreateView(LoginRequiredMixin, FormView):
         # 3. Пересчитываем num_images (на всякий случай) и цену
         job.num_images = job.images.count()
         job.total_price = calculate_job_price(model_type, job.num_images)
-        job.status = TrainingJob.Status.AWAITING_PAYMENT
-        job.save()
+        job.save(update_fields=["num_images", "total_price"])
+
+        # 3a. Immediately start the training window and queue the run
+        job.start_processing()
+        trigger_slug = slugify(project_name) or "model"
+        trigger_token = f"{trigger_slug[:40]}-{str(job.public_id)[:8]}"
+        queue_lora_job(job, trigger_token=trigger_token)
 
         # 4. Редирект на страницу статуса заказа
         return redirect("training:job_detail", public_id=job.public_id)
@@ -131,12 +137,6 @@ class TrainingJobDetailView(LoginRequiredMixin, DetailView):
                 "countdown_seconds": countdown_seconds,
                 "price_usd": price_usd,
                 "price_cny": price_cny,
-                "payment_submitted": job.status == TrainingJob.Status.PAYMENT_SUBMITTED,
-                "show_submit_payment": job.status
-                in {
-                    TrainingJob.Status.AWAITING_PAYMENT,
-                    TrainingJob.Status.CREATED,
-                },
                 "artifact_form": kwargs.get(
                     "artifact_form",
                     ModelArtifactForm(instance=getattr(job, "artifact", None))
@@ -160,32 +160,6 @@ class TrainingJobListView(LoginRequiredMixin, ListView):
             .select_related("model_type", "base_model")
             .order_by("-created_at")
         )
-
-
-class SubmitPaymentView(LoginRequiredMixin, View):
-    def post(self, request, public_id):
-        job = get_object_or_404(
-            TrainingJob, public_id=public_id, user=request.user
-        )
-
-        if job.status not in {
-            TrainingJob.Status.AWAITING_PAYMENT,
-            TrainingJob.Status.CREATED,
-        }:
-            messages.info(
-                request,
-                "This job is already submitted or processed."
-            )
-            return redirect(job)
-
-        job.submit_payment()
-        messages.success(
-            request,
-            "We received your payment submission. We will verify it and start training soon.",
-        )
-        return redirect(job)
-
-
 class JobImagesDownloadView(LoginRequiredMixin, View):
     """Allow job owners and staff to download training images as a ZIP archive."""
 
@@ -250,7 +224,9 @@ class StaffJobListView(ListView):
 
     def get_queryset(self):
         return (
-            TrainingJob.objects.select_related("user", "model_type", "base_model")
+            TrainingJob.objects.select_related(
+                "user", "model_type", "base_model", "lora_job"
+            )
             .annotate(image_count=models.F("num_images"))
             .order_by("-created_at")
         )
@@ -258,17 +234,15 @@ class StaffJobListView(ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         status_groups = {
-            "Awaiting payment": [
+            "Queued / processing": [
                 TrainingJob.Status.CREATED,
-                TrainingJob.Status.AWAITING_PAYMENT,
-            ],
-            "Payment submitted": [TrainingJob.Status.PAYMENT_SUBMITTED],
-            "Paid / processing": [
-                TrainingJob.Status.PAID,
                 TrainingJob.Status.PROCESSING,
+                TrainingJob.Status.PAID,
             ],
-            "Completed / other": [
-                TrainingJob.Status.COMPLETED,
+            "Completed": [TrainingJob.Status.COMPLETED],
+            "Issues / other": [
+                TrainingJob.Status.PAYMENT_SUBMITTED,
+                TrainingJob.Status.AWAITING_PAYMENT,
                 TrainingJob.Status.REFUNDED,
                 TrainingJob.Status.FAILED,
                 TrainingJob.Status.EXPIRED,
