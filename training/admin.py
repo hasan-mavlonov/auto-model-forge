@@ -1,7 +1,14 @@
 # training/admin.py
 from django.contrib import admin, messages
 
-from .models import BaseModel, ModelType, ModelArtifact, TrainingImage, TrainingJob
+from .models import (
+    BaseModel,
+    LoRATrainingJob,
+    ModelArtifact,
+    ModelType,
+    TrainingImage,
+    TrainingJob,
+)
 
 
 @admin.register(ModelType)
@@ -91,4 +98,21 @@ class TrainingJobAdmin(admin.ModelAdmin):
 class ModelArtifactAdmin(admin.ModelAdmin):
     list_display = ("job", "download_url", "size_mb", "created_at")
     search_fields = ("job__project_name", "job__public_id")
+
+
+@admin.register(LoRATrainingJob)
+class LoRATrainingJobAdmin(admin.ModelAdmin):
+    list_display = (
+        "training_job",
+        "job_id",
+        "status",
+        "gpu_type",
+        "steps",
+        "train_text_encoder",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("status", "gpu_type", "train_text_encoder")
+    search_fields = ("training_job__project_name", "job_id", "runpod_pod_id")
+    readonly_fields = ("logs", "error", "created_at", "updated_at", "job_id")
 

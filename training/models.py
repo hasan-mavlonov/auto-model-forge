@@ -3,6 +3,7 @@ import secrets
 import uuid
 from collections.abc import Iterable
 from datetime import timedelta
+from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
@@ -189,3 +190,61 @@ class ModelArtifact(models.Model):
 
     def __str__(self) -> str:
         return f"Artifact for job {self.job.public_id}"
+
+
+class LoRATrainingJob(models.Model):
+    """Tracks the full lifecycle of a LoRA fine-tuning run on RunPod."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROVISIONING = "provisioning", "Provisioning GPU"
+        UPLOADING = "uploading", "Uploading dataset"
+        CAPTIONING = "captioning", "Generating captions"
+        TRAINING = "training", "Training"
+        COLLECTING = "collecting", "Collecting artifacts"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+
+    training_job = models.OneToOneField(
+        TrainingJob,
+        on_delete=models.CASCADE,
+        related_name="lora_job",
+    )
+    job_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    trigger_token = models.CharField(max_length=100)
+    repeat = models.PositiveIntegerField(default=5)
+    image_count = models.PositiveIntegerField(default=0)
+    gpu_type = models.CharField(max_length=100, default="NVIDIA_L4")
+    runpod_pod_id = models.CharField(max_length=255, blank=True)
+    logs = models.TextField(blank=True)
+    output_path = models.CharField(max_length=500, blank=True)
+    error = models.TextField(blank=True)
+    learning_rate = models.DecimalField(max_digits=8, decimal_places=6, default=Decimal("0.000100"))
+    steps = models.PositiveIntegerField(default=2000)
+    train_text_encoder = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"LoRA job {self.job_id} ({self.training_job.project_name})"
+
+    def append_log(self, message: str, *, persist: bool = True) -> None:
+        timestamp = timezone.now().isoformat()
+        entry = f"[{timestamp}] {message}\n"
+        self.logs += entry
+        if persist:
+            self.save(update_fields=["logs", "updated_at"])
+
+    def mark_failed(self, error: str) -> None:
+        self.error = error
+        self.status = self.Status.FAILED
+        self.append_log(f"FAILED: {error}", persist=False)
+        self.save(update_fields=["status", "error", "logs", "updated_at"])
