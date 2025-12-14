@@ -198,5 +198,18 @@ EMAIL_HOST_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "").replace(" ", "")
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", f"Auto Model Forge <{EMAIL_HOST_USER}>")
 
+# ---------------------------------------------------------------------------
+# Training / RunPod configuration
+# ---------------------------------------------------------------------------
+
+RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY", "")
+RUNPOD_POD_TEMPLATE_ID = os.getenv("RUNPOD_POD_TEMPLATE_ID", "")
+RUNPOD_API_URL = os.getenv("RUNPOD_API_URL", "https://api.runpod.io/graphql")
+RUNPOD_DEFAULT_GPU = os.getenv("RUNPOD_DEFAULT_GPU", "NVIDIA_L4")
+
+LORA_DEFAULT_STEPS = int(os.getenv("LORA_DEFAULT_STEPS", "2000"))
+LORA_DEFAULT_LEARNING_RATE = os.getenv("LORA_DEFAULT_LEARNING_RATE", "0.0001")
+LORA_TRAIN_TEXT_ENCODER = os.getenv("LORA_TRAIN_TEXT_ENCODER", "false").lower() == "true"
+
 
 
