@@ -18,6 +18,11 @@ class RunPodError(Exception):
 class RunPodCapacityError(RunPodError):
     """Raised when RunPod cannot provision a pod due to lack of capacity."""
 
+    def __init__(self, message: str, *, gpu_type: str | None = None, cloud_type: str | None = None):
+        super().__init__(message)
+        self.gpu_type = gpu_type
+        self.cloud_type = cloud_type
+
 
 class RunPodClient:
     def __init__(
@@ -50,9 +55,7 @@ class RunPodClient:
             for error in data["errors"]:
                 message = error.get("message", "")
                 if "no longer any instances available" in message.lower():
-                    raise RunPodCapacityError(
-                        "No GPU capacity available for the requested specifications."
-                    )
+                    raise RunPodCapacityError(message)
             raise RunPodError(str(data["errors"]))
         return data.get("data") or {}
 
@@ -78,7 +81,12 @@ class RunPodClient:
                 "volumeInGb": 0,
             }
         }
-        data = self._graphql(mutation, variables)
+        try:
+            data = self._graphql(mutation, variables)
+        except RunPodCapacityError as err:
+            raise RunPodCapacityError(
+                err.args[0], gpu_type=gpu, cloud_type="SECURE"
+            ) from err
         pod = data.get("podFindAndDeployOnDemand")
         if not pod or "id" not in pod:
             raise RunPodError("Failed to parse pod creation response")
