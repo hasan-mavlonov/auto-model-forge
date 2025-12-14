@@ -21,6 +21,7 @@ from django.views.generic import DetailView, FormView, ListView
 from .forms import ModelArtifactForm, TrainingJobCreateForm
 from .models import TrainingJob, TrainingImage
 from .services import calculate_job_price, queue_lora_job
+from .tasks import start_lora_job_async
 
 
 class TrainingJobCreateView(LoginRequiredMixin, FormView):
@@ -63,7 +64,8 @@ class TrainingJobCreateView(LoginRequiredMixin, FormView):
         job.start_processing()
         trigger_slug = slugify(project_name) or "model"
         trigger_token = f"{trigger_slug[:40]}-{str(job.public_id)[:8]}"
-        queue_lora_job(job, trigger_token=trigger_token)
+        lora_job = queue_lora_job(job, trigger_token=trigger_token)
+        start_lora_job_async(lora_job)
 
         # 4. Редирект на страницу статуса заказа
         return redirect("training:job_detail", public_id=job.public_id)
