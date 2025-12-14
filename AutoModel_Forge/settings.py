@@ -216,6 +216,13 @@ RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY", "")
 RUNPOD_POD_TEMPLATE_ID = os.getenv("RUNPOD_POD_TEMPLATE_ID", "")
 RUNPOD_API_URL = os.getenv("RUNPOD_API_URL", "https://api.runpod.io/graphql")
 RUNPOD_DEFAULT_GPU = os.getenv("RUNPOD_DEFAULT_GPU", "NVIDIA_L4")
+RUNPOD_GPU_PREFERENCES = [
+    gpu.strip()
+    for gpu in os.getenv(
+        "RUNPOD_GPU_PREFERENCES", f"{RUNPOD_DEFAULT_GPU},NVIDIA_A10G,NVIDIA_A100"
+    ).split(",")
+    if gpu.strip()
+]
 
 LORA_DEFAULT_STEPS = int(os.getenv("LORA_DEFAULT_STEPS", "2000"))
 LORA_DEFAULT_LEARNING_RATE = os.getenv("LORA_DEFAULT_LEARNING_RATE", "0.0001")

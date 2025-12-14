@@ -103,14 +103,19 @@ class LoRATrainingRunner:
             except RunPodCapacityError as err:
                 job.status = LoRATrainingJob.Status.PENDING
                 job.save(update_fields=["status", "updated_at"])
-                requested_gpu = job.gpu_type or self.client.default_gpu
+                requested_gpus: list[str] = []
+                if job.gpu_type:
+                    requested_gpus.append(job.gpu_type)
+                for candidate in self.client.gpu_preferences:
+                    if candidate not in requested_gpus:
+                        requested_gpus.append(candidate)
                 cloud_type = getattr(err, "cloud_type", "SECURE") or "SECURE"
                 message = err.args[0] if err.args else "No GPU capacity available"
                 detail = (
-                    "RunPod does not currently have capacity for this GPU type. "
+                    "RunPod does not currently have capacity for the configured GPU types. "
                     "Job will retry shortly."
                 )
-                detail += f" (gpu={requested_gpu}, cloud={cloud_type})"
+                detail += f" (gpus={', '.join(requested_gpus)}, cloud={cloud_type})"
                 if message:
                     detail += f" RunPod response: {message}"
                 job.append_log(detail)
