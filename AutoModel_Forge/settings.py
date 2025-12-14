@@ -219,7 +219,13 @@ RUNPOD_DEFAULT_GPU = os.getenv("RUNPOD_DEFAULT_GPU", "NVIDIA_L4")
 RUNPOD_GPU_PREFERENCES = [
     gpu.strip()
     for gpu in os.getenv(
-        "RUNPOD_GPU_PREFERENCES", f"{RUNPOD_DEFAULT_GPU},NVIDIA_A10G,NVIDIA_A100"
+        "RUNPOD_GPU_PREFERENCES",
+        (
+            f"{RUNPOD_DEFAULT_GPU},"
+            "NVIDIA_A10G,NVIDIA_3090,NVIDIA_4090,NVIDIA_T4,"
+            "NVIDIA_2080_TI,NVIDIA_GTX_1080,NVIDIA_GTX_1080_Ti,"
+            "NVIDIA_RTX_2060,NVIDIA_RTX_2070,NVIDIA_A100"
+        ),
     ).split(",")
     if gpu.strip()
 ]
