@@ -57,7 +57,11 @@ class Command(BaseCommand):
                 LoRATrainingJob.objects.select_for_update(skip_locked=True)
                 .filter(
                     status=LoRATrainingJob.Status.PENDING,
-                    training_job__status__in=[TrainingJob.Status.PAID, TrainingJob.Status.PROCESSING],
+                    training_job__status__in=[
+                        TrainingJob.Status.PAID,
+                        TrainingJob.Status.PROCESSING,
+                        TrainingJob.Status.CREATED,
+                    ],
                 )
                 .order_by("created_at")
             )

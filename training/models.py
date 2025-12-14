@@ -129,6 +129,17 @@ class TrainingJob(models.Model):
         self.status = self.Status.PAYMENT_SUBMITTED
         self.save(update_fields=["payment_submitted_at", "status"])
 
+    def start_processing(self, when: timezone.datetime | None = None):
+        """Begin the training countdown immediately without payments."""
+
+        if when is None:
+            when = timezone.now()
+
+        self.paid_at = when
+        self.deadline_at = when + timedelta(hours=self.DEADLINE_HOURS)
+        self.status = self.Status.PROCESSING
+        self.save(update_fields=["paid_at", "deadline_at", "status"])
+
     @classmethod
     def generate_payment_reference(cls) -> str:
         """Generate a short, unique payment code that fits payment memo limits."""

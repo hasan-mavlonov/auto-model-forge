@@ -6,7 +6,7 @@
     <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
       <div>
         <h1 style="margin: 0;">My training jobs</h1>
-        <p class="subtext" style="margin: 0.35rem 0 0;">Track your uploads, payment status, and downloads in one place.</p>
+        <p class="subtext" style="margin: 0.35rem 0 0;">Track your uploads, training progress, and downloads in one place.</p>
       </div>
       <div style="display: flex; gap: 0.65rem;">
         <a href="{% url 'training:job_create' %}" class="btn-primary">New training job</a>
@@ -38,12 +38,10 @@
                 <td style="padding: 0.75rem 0.6rem;">
                   {% if job.status == "completed" %}
                     <span class="status-badge status-completed">Completed</span>
-                  {% elif job.status == "paid" or job.status == "processing" %}
-                    <span class="status-badge status-paid">Paid / Processing</span>
-                  {% elif job.status == "payment_submitted" %}
-                    <span class="status-badge status-submitted">Awaiting confirmation</span>
-                  {% elif job.status == "awaiting_payment" or job.status == "created" %}
-                    <span class="status-badge status-awaiting">Awaiting payment</span>
+                  {% elif job.status == "processing" or job.status == "paid" %}
+                    <span class="status-badge status-paid">Training</span>
+                  {% elif job.status == "created" %}
+                    <span class="status-badge status-awaiting">Queued</span>
                   {% else %}
                     <span class="status-badge status-other">{{ job.get_status_display }}</span>
                   {% endif %}

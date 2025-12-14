@@ -6,7 +6,7 @@
     <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
       <div>
         <h1 style="margin: 0;">Admin — training jobs</h1>
-        <p class="subtext" style="margin: 0.35rem 0 0;">Internal view for staff. Confirm payments, monitor deadlines, and mark jobs complete.</p>
+        <p class="subtext" style="margin: 0.35rem 0 0;">Internal view for staff. Monitor queues, deadlines, and deliver trained models.</p>
       </div>
     </div>
   </section>
@@ -26,8 +26,7 @@
                 <th style="padding: 0.65rem;">Status</th>
                 <th style="padding: 0.65rem;">Images</th>
                 <th style="padding: 0.65rem;">Price</th>
-                <th style="padding: 0.65rem;">Payment note</th>
-                <th style="padding: 0.65rem;">Payment submitted</th>
+                <th style="padding: 0.65rem;">LoRA job</th>
                 <th style="padding: 0.65rem;">Deadline</th>
                 <th style="padding: 0.65rem; text-align: right;">Actions</th>
               </tr>
@@ -52,13 +51,11 @@
                     <td style="padding: 0.65rem;">{{ job.image_count }}</td>
                     <td style="padding: 0.65rem; font-weight: 700;">${{ job.total_price|floatformat:2 }}</td>
                     <td style="padding: 0.65rem;">
-                      <code>{{ job.payment_reference }}</code>
-                    </td>
-                    <td style="padding: 0.65rem;">
-                      {% if job.payment_submitted_at %}
-                        <span class="status-badge status-submitted">Yes — {{ job.payment_submitted_at|date:"Y-m-d H:i" }}</span>
+                      {% if job.lora_job %}
+                        <div class="subtext">{{ job.lora_job.get_status_display }}</div>
+                        <div class="muted" style="font-size: 0.85rem;">GPU: {{ job.lora_job.gpu_type }}</div>
                       {% else %}
-                        <span class="status-badge status-awaiting">No</span>
+                        <span class="status-badge status-awaiting">Not queued</span>
                       {% endif %}
                     </td>
                     <td style="padding: 0.65rem; color: var(--muted);">
@@ -70,12 +67,6 @@
                     </td>
                     <td style="padding: 0.65rem; text-align: right; display: flex; gap: 0.4rem; justify-content: flex-end;">
                       <a href="{% url 'training:job_detail' job.public_id %}" class="btn-secondary">Open</a>
-                      <form method="post" style="display: inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="job_id" value="{{ job.id }}">
-                        <input type="hidden" name="action" value="mark_paid">
-                        <button type="submit" class="btn-primary" style="padding: 0.55rem 0.9rem;">Confirm payment</button>
-                      </form>
                       <form method="post" style="display: inline;">
                         {% csrf_token %}
                         <input type="hidden" name="job_id" value="{{ job.id }}">
