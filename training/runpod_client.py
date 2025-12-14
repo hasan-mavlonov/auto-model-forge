@@ -15,6 +15,10 @@ class RunPodError(Exception):
     """Raised when RunPod actions fail."""
 
 
+class RunPodCapacityError(RunPodError):
+    """Raised when RunPod cannot provision a pod due to lack of capacity."""
+
+
 class RunPodClient:
     def __init__(
         self,
@@ -43,6 +47,12 @@ class RunPodClient:
             raise RunPodError(f"RunPod API request failed: {resp.status_code} {resp.text}")
         data = resp.json()
         if "errors" in data:
+            for error in data["errors"]:
+                message = error.get("message", "")
+                if "no longer any instances available" in message.lower():
+                    raise RunPodCapacityError(
+                        "No GPU capacity available for the requested specifications."
+                    )
             raise RunPodError(str(data["errors"]))
         return data.get("data") or {}
 

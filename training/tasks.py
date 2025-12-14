@@ -7,11 +7,13 @@ from typing import Callable
 from django.db import transaction
 
 from .models import LoRATrainingJob, TrainingJob
-from .runpod_client import RunPodClient, RunPodError
+from .runpod_client import RunPodCapacityError, RunPodClient, RunPodError
 from .training_runner import LoRATrainingRunner
 
 
-def _process_job(job: LoRATrainingJob, runner_factory: Callable[[], LoRATrainingRunner] | None = None) -> None:
+def _process_job(
+    job: LoRATrainingJob, runner_factory: Callable[[], LoRATrainingRunner] | None = None
+) -> LoRATrainingJob:
     """Run a single LoRA training job and persist status transitions."""
 
     runner_factory = runner_factory or (lambda: LoRATrainingRunner(RunPodClient()))
@@ -27,10 +29,17 @@ def _process_job(job: LoRATrainingJob, runner_factory: Callable[[], LoRATraining
 
     try:
         runner.run(job)
+    except RunPodCapacityError as err:
+        job.append_log(f"RunPod capacity unavailable: {err}")
+        raise
     except RunPodError as err:
         job.append_log(f"RunPod error: {err}")
+        raise
     except Exception as exc:  # noqa: BLE001
         job.append_log(f"Unexpected failure: {exc}")
+        raise
+
+    return job
 
 
 def start_lora_job_async(job: LoRATrainingJob) -> None:
@@ -43,7 +52,13 @@ def start_lora_job_async(job: LoRATrainingJob) -> None:
                 .select_related("training_job")
                 .get(id=job_id)
             )
-        _process_job(job_for_update)
+        try:
+            _process_job(job_for_update)
+        except RunPodCapacityError:
+            # Leave the job pending for a later retry.
+            return
+        except Exception:
+            return
 
     if job.status not in {LoRATrainingJob.Status.PENDING, LoRATrainingJob.Status.PROVISIONING}:
         return

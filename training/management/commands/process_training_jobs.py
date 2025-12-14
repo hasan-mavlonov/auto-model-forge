@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from training.models import LoRATrainingJob, TrainingJob
-from training.runpod_client import RunPodClient, RunPodError
+from training.runpod_client import RunPodCapacityError, RunPodClient, RunPodError
 from training.training_runner import LoRATrainingRunner
 from training.tasks import _process_job
 
@@ -39,8 +39,27 @@ class Command(BaseCommand):
                 jobs_processed += 1
                 self.stdout.write(self.style.NOTICE(f"Starting LoRA job {job.job_id}"))
                 try:
-                    _process_job(job, runner_factory=lambda: runner)
-                    self.stdout.write(self.style.SUCCESS(f"Completed LoRA job {job.job_id}"))
+                    processed = _process_job(job, runner_factory=lambda: runner)
+                    if processed.status == LoRATrainingJob.Status.COMPLETED:
+                        self.stdout.write(self.style.SUCCESS(f"Completed LoRA job {job.job_id}"))
+                    elif processed.status == LoRATrainingJob.Status.PENDING:
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"LoRA job {job.job_id} rescheduled due to GPU capacity."
+                            )
+                        )
+                    else:
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"LoRA job {job.job_id} exited with status {processed.status}."
+                            )
+                        )
+                except RunPodCapacityError as err:
+                    self.stderr.write(
+                        self.style.WARNING(
+                            f"RunPod capacity unavailable for {job.job_id}; will retry. ({err})"
+                        )
+                    )
                 except RunPodError as err:
                     self.stderr.write(self.style.ERROR(f"RunPod failure for {job.job_id}: {err}"))
                 except Exception as exc:  # noqa: BLE001
