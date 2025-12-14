@@ -88,7 +88,9 @@ class RunPodClient:
         query PodStatus($podId: ID!) {
           pod(podId: $podId) {
             id
-            runtime { status }
+            runtime {
+              state
+            }
           }
         }
         """
@@ -96,12 +98,15 @@ class RunPodClient:
         while time.time() < deadline:
             data = self._graphql(query, {"podId": pod_id})
             runtime = (data.get("pod") or {}).get("runtime") or {}
-            status = runtime.get("status")
-            if status == "RUNNING":
+            state = runtime.get("state")
+
+            if state == "RUNNING":
                 return
-            if status in {"FAILED", "CANCELLED"}:
-                raise RunPodError(f"Pod {pod_id} failed to start (status={status})")
+            if state in {"FAILED", "CANCELLED", "TERMINATED"}:
+                raise RunPodError(f"Pod {pod_id} failed to start (state={state})")
+
             time.sleep(interval)
+
         raise RunPodError(f"Pod {pod_id} did not become ready within {timeout} seconds")
 
     # ------------------------------- File IO --------------------------------
