@@ -7,6 +7,7 @@ from django.db import transaction
 from training.models import LoRATrainingJob, TrainingJob
 from training.runpod_client import RunPodClient, RunPodError
 from training.training_runner import LoRATrainingRunner
+from training.tasks import _process_job
 
 
 class Command(BaseCommand):
@@ -26,20 +27,19 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        client = RunPodClient()
-        runner = LoRATrainingRunner(client)
         sleep_seconds: int = options["sleep"]
         run_once: bool = options["once"]
+
+        client = RunPodClient()
+        runner = LoRATrainingRunner(client)
 
         while True:
             jobs_processed = 0
             for job in self._next_jobs():
                 jobs_processed += 1
                 self.stdout.write(self.style.NOTICE(f"Starting LoRA job {job.job_id}"))
-                job.training_job.status = TrainingJob.Status.PROCESSING
-                job.training_job.save(update_fields=["status"])
                 try:
-                    runner.run(job)
+                    _process_job(job, runner_factory=lambda: runner)
                     self.stdout.write(self.style.SUCCESS(f"Completed LoRA job {job.job_id}"))
                 except RunPodError as err:
                     self.stderr.write(self.style.ERROR(f"RunPod failure for {job.job_id}: {err}"))

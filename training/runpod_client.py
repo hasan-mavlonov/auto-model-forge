@@ -56,7 +56,6 @@ class RunPodClient:
         mutation Deploy($input: PodFindAndDeployOnDemandInput!) {
           podFindAndDeployOnDemand(input: $input) {
             id
-            status
           }
         }
         """
