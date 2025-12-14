@@ -31,6 +31,7 @@ class RunPodClient:
         *,
         api_url: str | None = None,
         default_gpu: str | None = None,
+        gpu_preferences: Iterable[str] | None = None,
         pod_template_id: str | None = None,
     ) -> None:
         self.api_key = api_key or os.getenv("RUNPOD_API_KEY")
@@ -39,6 +40,20 @@ class RunPodClient:
 
         self.api_url = api_url or os.getenv("RUNPOD_API_URL", "https://api.runpod.io/graphql")
         self.default_gpu = default_gpu or os.getenv("RUNPOD_DEFAULT_GPU", "NVIDIA_L4")
+        env_gpu_preferences = os.getenv("RUNPOD_GPU_PREFERENCES")
+        if gpu_preferences is not None:
+            base_gpu_preferences = list(gpu_preferences)
+        elif env_gpu_preferences:
+            base_gpu_preferences = [
+                gpu.strip() for gpu in env_gpu_preferences.split(",") if gpu.strip()
+            ]
+        else:
+            base_gpu_preferences = [self.default_gpu, "NVIDIA_A10G", "NVIDIA_A100"]
+
+        self.gpu_preferences: list[str] = []
+        for gpu in base_gpu_preferences:
+            if gpu and gpu not in self.gpu_preferences:
+                self.gpu_preferences.append(gpu)
         self.pod_template_id = pod_template_id or os.getenv("RUNPOD_POD_TEMPLATE_ID")
 
     # --------------------------- GraphQL utilities ---------------------------
@@ -60,11 +75,7 @@ class RunPodClient:
         return data.get("data") or {}
 
     # ------------------------------- Pod control -----------------------------
-    def create_pod(self, *, gpu_type: str | None = None, name: str | None = None) -> str:
-        gpu = gpu_type or self.default_gpu
-        if not self.pod_template_id:
-            raise RunPodError("RUNPOD_POD_TEMPLATE_ID is required to provision pods")
-
+    def _deploy_pod(self, *, gpu: str, name: str | None = None) -> str:
         mutation = """
         mutation Deploy($input: PodFindAndDeployOnDemandInput!) {
           podFindAndDeployOnDemand(input: $input) {
@@ -91,6 +102,36 @@ class RunPodClient:
         if not pod or "id" not in pod:
             raise RunPodError("Failed to parse pod creation response")
         return pod["id"]
+
+    def create_pod(self, *, gpu_type: str | None = None, name: str | None = None) -> str:
+        if not self.pod_template_id:
+            raise RunPodError("RUNPOD_POD_TEMPLATE_ID is required to provision pods")
+
+        gpu_candidates: list[str] = []
+        if gpu_type:
+            gpu_candidates.append(gpu_type)
+        for gpu in self.gpu_preferences:
+            if gpu not in gpu_candidates:
+                gpu_candidates.append(gpu)
+        if not gpu_candidates:
+            raise RunPodError("No GPU types configured for pod creation")
+
+        last_capacity_error: RunPodCapacityError | None = None
+        for gpu in gpu_candidates:
+            try:
+                return self._deploy_pod(gpu=gpu, name=name)
+            except RunPodCapacityError as err:
+                last_capacity_error = err
+
+        if last_capacity_error:
+            raise RunPodCapacityError(
+                "RunPod does not currently have capacity for configured GPU types: "
+                + ", ".join(gpu_candidates),
+                gpu_type=last_capacity_error.gpu_type or gpu_candidates[-1],
+                cloud_type=last_capacity_error.cloud_type,
+            ) from last_capacity_error
+
+        raise RunPodError("Failed to create pod for unknown reasons")
 
     def terminate_pod(self, pod_id: str) -> None:
         mutation = """
