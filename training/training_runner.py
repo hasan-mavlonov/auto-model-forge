@@ -100,13 +100,20 @@ class LoRATrainingRunner:
                     job.append_log(f"Provisioned pod {pod_id}")
                     job.save(update_fields=["runpod_pod_id", "logs", "updated_at"])
                 self.client.wait_for_pod_ready(pod_id)
-            except RunPodCapacityError:
+            except RunPodCapacityError as err:
                 job.status = LoRATrainingJob.Status.PENDING
                 job.save(update_fields=["status", "updated_at"])
-                job.append_log(
+                requested_gpu = job.gpu_type or self.client.default_gpu
+                cloud_type = getattr(err, "cloud_type", "SECURE") or "SECURE"
+                message = err.args[0] if err.args else "No GPU capacity available"
+                detail = (
                     "RunPod does not currently have capacity for this GPU type. "
-                    "Job will retry shortly.",
+                    "Job will retry shortly."
                 )
+                detail += f" (gpu={requested_gpu}, cloud={cloud_type})"
+                if message:
+                    detail += f" RunPod response: {message}"
+                job.append_log(detail)
                 return
 
             # Upload
