@@ -11,7 +11,7 @@ from django.core.files.base import File
 from django.utils import timezone
 
 from .models import LoRATrainingJob, ModelArtifact, TrainingJob
-from .runpod_client import RunPodClient, RunPodError
+from .runpod_client import RunPodCapacityError, RunPodClient, RunPodError
 
 DATA_ROOT = "/workspace/data"
 OUTPUT_ROOT = "/workspace/output"
@@ -90,15 +90,24 @@ class LoRATrainingRunner:
         pod_id = job.runpod_pod_id
         dataset_root: Path | None = None
         try:
-            # Provision
-            job.status = LoRATrainingJob.Status.PROVISIONING
-            job.save(update_fields=["status", "updated_at"])
-            if not pod_id:
-                pod_id = self.client.create_pod(gpu_type=job.gpu_type)
-                job.runpod_pod_id = pod_id
-                job.append_log(f"Provisioned pod {pod_id}")
-                job.save(update_fields=["runpod_pod_id", "logs", "updated_at"])
-            self.client.wait_for_pod_ready(pod_id)
+            try:
+                # Provision
+                job.status = LoRATrainingJob.Status.PROVISIONING
+                job.save(update_fields=["status", "updated_at"])
+                if not pod_id:
+                    pod_id = self.client.create_pod(gpu_type=job.gpu_type)
+                    job.runpod_pod_id = pod_id
+                    job.append_log(f"Provisioned pod {pod_id}")
+                    job.save(update_fields=["runpod_pod_id", "logs", "updated_at"])
+                self.client.wait_for_pod_ready(pod_id)
+            except RunPodCapacityError:
+                job.status = LoRATrainingJob.Status.PENDING
+                job.save(update_fields=["status", "updated_at"])
+                job.append_log(
+                    "RunPod does not currently have capacity for this GPU type. "
+                    "Job will retry shortly.",
+                )
+                return
 
             # Upload
             job.status = LoRATrainingJob.Status.UPLOADING
