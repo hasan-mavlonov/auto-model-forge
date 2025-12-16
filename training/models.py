@@ -213,6 +213,7 @@ class LoRATrainingJob(models.Model):
         CAPTIONING = "captioning", "Generating captions"
         TRAINING = "training", "Training"
         COLLECTING = "collecting", "Collecting artifacts"
+        MANUAL_REVIEW = "manual_review", "Needs manual review"
         COMPLETED = "completed", "Completed"
         FAILED = "failed", "Failed"
 
