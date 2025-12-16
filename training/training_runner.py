@@ -156,8 +156,11 @@ class LoRATrainingRunner:
             job.training_job.save(update_fields=["status", "completed_at"])
             job.save(update_fields=["status", "updated_at", "output_path"])
         except Exception as exc:  # noqa: BLE001
-            job.mark_failed(str(exc))
-            job.training_job.status = TrainingJob.Status.FAILED
+            job.status = LoRATrainingJob.Status.MANUAL_REVIEW
+            job.error = str(exc)
+            job.append_log(f"Automatic processing halted: {exc}", persist=False)
+            job.save(update_fields=["status", "error", "logs", "updated_at"])
+            job.training_job.status = TrainingJob.Status.PROCESSING
             job.training_job.save(update_fields=["status"])
             raise
         finally:
